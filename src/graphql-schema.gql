@@ -1,0 +1,67 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Answer {
+  id: String!
+  answer: String!
+  correct: Boolean
+  number: Int
+  question: Question!
+}
+
+type Question {
+  id: String!
+  question: String!
+  singleAnswer: Boolean
+  multipleAnswer: Boolean
+  sorting: Boolean
+  plainText: Boolean
+  answers: [Answer!]!
+}
+
+type Query {
+  question(id: String!): Question!
+  answer(id: String!): Answer!
+}
+
+type Mutation {
+  createQuestion(createQuestionInput: CreateQuestionInput!): Question!
+  updateQuestion(updateQuestionInput: UpdateQuestionInput!): Question!
+  removeQuestion(id: String!): Question!
+  createAnswer(createAnswerInput: CreateAnswerInput!): Answer!
+  updateAnswer(updateAnswerInput: UpdateAnswerInput!): Answer!
+  removeAnswer(id: String!): Answer!
+}
+
+input CreateQuestionInput {
+  question: String!
+  singleAnswer: Boolean
+  multipleAnswer: Boolean
+  sorting: Boolean
+  plainText: Boolean
+}
+
+input UpdateQuestionInput {
+  id: String!
+  question: String!
+  singleAnswer: Boolean
+  multipleAnswer: Boolean
+  sorting: Boolean
+  plainText: Boolean
+}
+
+input CreateAnswerInput {
+  answer: String!
+  correct: Boolean
+  number: Int
+  questionId: String!
+}
+
+input UpdateAnswerInput {
+  answer: String!
+  correct: Boolean
+  number: Int
+  questionId: String!
+  id: String!
+}
