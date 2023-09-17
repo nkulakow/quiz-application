@@ -15,8 +15,8 @@ type Employee {
   surname: String!
   designation: String!
   city: String
-  Project: Project!
-  projectId: String!
+  Project: Project
+  projectId: String
 }
 
 type Query {
@@ -29,7 +29,7 @@ type Mutation {
   createEmployee(employee: EmployeeCreateDTO!): Employee!
   createProject(project: CreateProjectInput!): Project!
   updateProject(project: UpdateProjectInput!): Project!
-  removeProject(id: Int!): Project!
+  removeProject(id: String!): Project!
 }
 
 input EmployeeCreateDTO {

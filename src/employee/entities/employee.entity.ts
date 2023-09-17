@@ -22,11 +22,11 @@ export class Employee {
     @Column({nullable:true})
     city: string;
     
-    @ManyToOne(()=>Project, project=>project.employees)
-    @Field(()=>Project)
+    @ManyToOne(()=>Project, project=>project.employees, {nullable:true})
+    @Field(()=>Project, {nullable:true})
     Project: Project
     
-    @Field()
-    @Column()
+    @Field({nullable:true})
+    @Column({nullable:true})
     projectId: string;
 }

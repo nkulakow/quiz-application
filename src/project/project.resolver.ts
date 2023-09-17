@@ -25,11 +25,11 @@ export class ProjectResolver {
 
   @Mutation(() => Project)
   updateProject(@Args('project') project: UpdateProjectInput) {
-    return this.projectService.update(project.id, project);
+    return this.projectService.update(project);
   }
 
   @Mutation(() => Project)
-  removeProject(@Args('id', { type: () => Int }) id: number) {
+  removeProject(@Args('id') id: string) {
     return this.projectService.remove(id);
   }
 }
