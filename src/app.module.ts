@@ -9,7 +9,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AnswerModule } from './answer/answer.module';
 
 @Module({
-  imports: [QuestionModule, GraphQLModule.forRoot(
+  imports: [QuestionModule, AnswerModule, GraphQLModule.forRoot(
     {driver: ApolloDriver, autoSchemaFile: join(process.cwd(), 'src/graphql-schema.gql'),}
   ),
 TypeOrmModule.forRoot({

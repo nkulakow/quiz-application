@@ -22,5 +22,9 @@ export class Answer {
   @JoinColumn()
   @Field(()=>Question)
   question: Question
+  
+  @Field()
+  @Column()
+  questionId: string;
 
 }

@@ -8,6 +8,7 @@ type Answer {
   correct: Boolean
   number: Int
   question: Question!
+  questionId: String!
 }
 
 type Question {
@@ -26,7 +27,7 @@ type Query {
 }
 
 type Mutation {
-  createQuestion(createQuestionInput: CreateQuestionInput!): Question!
+  createQuestion(createQuestionInput: CreateQuestionInput!, answersInput: [CreateAnswerInput!]!): Question!
   updateQuestion(updateQuestionInput: UpdateQuestionInput!): Question!
   removeQuestion(id: String!): Question!
   createAnswer(createAnswerInput: CreateAnswerInput!): Answer!
@@ -42,6 +43,13 @@ input CreateQuestionInput {
   plainText: Boolean
 }
 
+input CreateAnswerInput {
+  answer: String!
+  correct: Boolean
+  number: Int
+  questionId: String
+}
+
 input UpdateQuestionInput {
   id: String!
   question: String!
@@ -49,13 +57,6 @@ input UpdateQuestionInput {
   multipleAnswer: Boolean
   sorting: Boolean
   plainText: Boolean
-}
-
-input CreateAnswerInput {
-  answer: String!
-  correct: Boolean
-  number: Int
-  questionId: String!
 }
 
 input UpdateAnswerInput {

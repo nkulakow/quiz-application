@@ -4,12 +4,27 @@ import { UpdateQuestionInput } from './dto/update-question.input';
 import { Question } from './entities/question.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { CreateAnswerInput } from 'src/answer/dto/create-answer.input';
+import { Answer } from 'src/answer/entities/answer.entity';
+import { AnswerService } from 'src/answer/answer.service';
 
 @Injectable()
 export class QuestionService {
-  constructor(@InjectRepository(Question) private questionRepository: Repository<Question>) {}
-  create(createQuestionInput: CreateQuestionInput) {
-    return 'This action adds a new question';
+  constructor(@InjectRepository(Question) private questionRepository: Repository<Question>, 
+  @InjectRepository(Answer) private answerRepository: Repository<Answer>) {}
+  
+  async create(createQuestionInput: CreateQuestionInput, answersInput: CreateAnswerInput[]) {
+    let questionToCreate = this.questionRepository.create(createQuestionInput);
+    let createdQuestion = await this.questionRepository.save(questionToCreate);
+    let questionId = createdQuestion.id;
+    createdQuestion.answers = [];
+    for (let answerInput of answersInput){
+      let AnswerServiceInstance = new AnswerService(this.answerRepository);
+      answerInput.questionId = questionId;
+      let answer = await AnswerServiceInstance.create(answerInput);
+      createdQuestion.answers.push(answer);
+    }
+    return createdQuestion;
   }
 
   findAll() {
