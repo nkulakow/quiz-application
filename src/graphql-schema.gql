@@ -30,7 +30,7 @@ type Query {
 
 type Mutation {
   createQuestion(createQuestionInput: CreateQuestionInput!, answersInput: [CreateAnswerInput!]!): Question!
-  updateQuestion(updateQuestionInput: UpdateQuestionInput!): Question!
+  updateQuestion(updateQuestionInput: UpdateQuestionInput!, updateAnswersInput: [UpdateAnswerInput!]!): Question!
   removeQuestion(id: String!): Question!
   createAnswer(createAnswerInput: CreateAnswerInput!): Answer!
   updateAnswer(updateAnswerInput: UpdateAnswerInput!): Answer!
@@ -54,7 +54,7 @@ input CreateAnswerInput {
 
 input UpdateQuestionInput {
   id: String!
-  question: String!
+  question: String
   singleAnswer: Boolean
   multipleAnswer: Boolean
   sorting: Boolean
@@ -65,6 +65,6 @@ input UpdateAnswerInput {
   answer: String!
   correct: Boolean
   number: Int
-  questionId: String!
+  questionId: String
   id: String!
 }

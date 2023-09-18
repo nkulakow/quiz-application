@@ -12,6 +12,6 @@ export class UpdateAnswerInput extends PartialType(CreateAnswerInput) {
   @Field(()=>Int, {nullable: true})
   number: number;
   
-  @Field()
+  @Field({nullable: true})
   questionId: string;
 }

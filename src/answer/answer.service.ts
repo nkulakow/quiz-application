@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateAnswerInput } from './dto/create-answer.input';
 import { UpdateAnswerInput } from './dto/update-answer.input';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -19,11 +19,15 @@ export class AnswerService {
   }
 
   findOne(id: string) {
-    return `This action returns a #${id} answer`;
+    return this.answerRepository.findOne({where : {id: id},  relations: ["question"] });
   }
 
-  update(id: string, updateAnswerInput: UpdateAnswerInput) {
-    return `This action updates a #${id} answer`;
+  update(updateAnswerInput: UpdateAnswerInput) {
+    if (!this.findOne(updateAnswerInput.id)) {
+      throw new NotFoundException(`Project with id ${updateAnswerInput.id} not found`);
+    }
+    let answerToUpdate = this.answerRepository.create(updateAnswerInput);
+    return this.answerRepository.save(answerToUpdate);
   }
 
   remove(id: string) {

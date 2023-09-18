@@ -4,7 +4,7 @@ import { InputType, Field } from '@nestjs/graphql';
 export class UpdateQuestionInput  {
   @Field()
   id: string;
-  @Field()
+  @Field({nullable: true})
   question: string;
   @Field({nullable: true})
   singleAnswer: boolean;

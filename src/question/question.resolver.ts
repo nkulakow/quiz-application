@@ -4,6 +4,7 @@ import { Question } from './entities/question.entity';
 import { CreateQuestionInput } from './dto/create-question.input';
 import { UpdateQuestionInput } from './dto/update-question.input';
 import { CreateAnswerInput } from 'src/answer/dto/create-answer.input';
+import { UpdateAnswerInput } from 'src/answer/dto/update-answer.input';
 
 @Resolver(() => Question)
 export class QuestionResolver {
@@ -27,8 +28,8 @@ export class QuestionResolver {
   }
 
   @Mutation(() => Question)
-  updateQuestion(@Args('updateQuestionInput') updateQuestionInput: UpdateQuestionInput) {
-    return this.questionService.update(updateQuestionInput);
+  updateQuestion(@Args('updateQuestionInput') updateQuestionInput: UpdateQuestionInput, @Args('updateAnswersInput',  { type: () => [UpdateAnswerInput] }) updateAnswersInput: UpdateAnswerInput[]) {
+    return this.questionService.update(updateQuestionInput, updateAnswersInput);
   }
 
   @Mutation(() => Question)

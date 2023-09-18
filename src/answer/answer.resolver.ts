@@ -25,7 +25,7 @@ export class AnswerResolver {
 
   @Mutation(() => Answer)
   updateAnswer(@Args('updateAnswerInput') updateAnswerInput: UpdateAnswerInput) {
-    return this.answerService.update(updateAnswerInput.id, updateAnswerInput);
+    return this.answerService.update(updateAnswerInput);
   }
 
   @Mutation(() => Answer)
