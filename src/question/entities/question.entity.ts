@@ -26,5 +26,10 @@ export class Question {
   @OneToMany(()=>Answer, answer=>answer.question)
   @Field(()=>[Answer])
   answers: Answer[]
-
+  
+  @Field({nullable: true})
+  type: string;
+  
 }
+
+

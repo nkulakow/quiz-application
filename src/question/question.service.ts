@@ -28,7 +28,7 @@ export class QuestionService {
   }
 
   findAll() {
-    return `This action returns all question`;
+    return this.questionRepository.find({ relations: ["answers"] });
   }
 
   findOne(id: string) : Promise<Question> {

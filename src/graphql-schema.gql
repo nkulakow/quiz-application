@@ -19,10 +19,12 @@ type Question {
   sorting: Boolean
   plainText: Boolean
   answers: [Answer!]!
+  type: String
 }
 
 type Query {
-  question(id: String!): Question!
+  getAllQuestions: [Question!]!
+  getOneQuestion(id: String!): Question!
   answer(id: String!): Answer!
 }
 

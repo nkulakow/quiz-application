@@ -1,4 +1,4 @@
-import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, ResolveField, Parent } from '@nestjs/graphql';
 import { QuestionService } from './question.service';
 import { Question } from './entities/question.entity';
 import { CreateQuestionInput } from './dto/create-question.input';
@@ -16,12 +16,12 @@ export class QuestionResolver {
     return valueToReturn;
   }
 
-  @Query(() => [Question], { name: 'question' })
+  @Query(() => [Question], { name: 'getAllQuestions' })
   findAll() {
     return this.questionService.findAll();
   }
 
-  @Query(() => Question, { name: 'question' })
+  @Query(() => Question, { name: 'getOneQuestion' })
   findOne(@Args('id') id: string) {
     return this.questionService.findOne(id);
   }
@@ -35,7 +35,21 @@ export class QuestionResolver {
   removeQuestion(@Args('id') id: string) {
     return this.questionService.remove(id);
   }
-
+  
+  @ResolveField(() => String, { nullable: true })
+  type(@Parent() question: Question): string | null {
+    if (question.singleAnswer) {
+      return 'Single Answer';
+    } else if (question.multipleAnswer) {
+      return 'Multiple Answer';
+    } else if (question.sorting) {
+      return 'Sorting Question';
+    } else if (question.plainText) {
+      return 'Plain Text Answer';
+    } else {
+      return null;
+    }
+  }
   
 }
 
