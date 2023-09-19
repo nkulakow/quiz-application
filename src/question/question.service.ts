@@ -5,9 +5,9 @@ import { Question } from './entities/question.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateAnswerInput } from 'src/answer/dto/create-answer.input';
-import { Answer } from 'src/answer/entities/answer.entity';
-import { AnswerService } from 'src/answer/answer.service';
-import { UpdateAnswerInput } from 'src/answer/dto/update-answer.input';
+import { Answer } from '../../src/answer/entities/answer.entity';
+import { AnswerService } from '../../src/answer/answer.service';
+import { UpdateAnswerInput } from '../../src/answer/dto/update-answer.input';
 
 @Injectable()
 export class QuestionService {
@@ -62,19 +62,59 @@ export class QuestionService {
     }
   }
   
-
-  remove(id: string) {
-    return `This action removes a #${id} question`;
+  async remove(id: string) {
+    let questionToRemove = await this.findOne(id);
+    if (!questionToRemove) {
+      throw new NotFoundException(`Question with id ${id} not found`);
+    }
+    const answersToRemove = await this.answerRepository.find({ where : {question: questionToRemove} });
+    await this.answerRepository.remove(answersToRemove);
+    await this.questionRepository.remove(questionToRemove); 
+    questionToRemove.id = id;
+    return questionToRemove;
   }
   
-  checkAnswer(id:string, answer: string|string[]){
-    let question = this.findOne(id);
-    return `This action checks the answer`;
+  async checkAnswer(id:string, givenAnswerIds: string[]){
+    let question = await this.findOne(id);
+    if (question.singleAnswer){
+      return this.checkSingleAnswer(question, givenAnswerIds[0]);
+    }
+    if (question.multipleAnswer){
+      return this.checkMultipleAnswer(question, givenAnswerIds);
+    }
+    if (question.sorting){
+      return this.checkSortingAnswer(question, givenAnswerIds);
+    }
   }
   
-  private checkSingleAnswer(id:string, answer: string[]){
-    let question = this.findOne(id);
-    return `This action checks the answer`;
+  private checkSingleAnswer(question:Question, answerId: string){
+    let correctAnswer = question.answers.find(answer => answer.correct);
+    return correctAnswer.id === answerId;
+  }
+  
+  private checkMultipleAnswer(question:Question, answerIds: string[]){
+    let correctAnswers = question.answers.filter(answer => answer.correct);
+    let correctAnswerIds = correctAnswers.map(answer => answer.id);
+    if (correctAnswerIds.length !== answerIds.length){
+      return false;
+    }
+    for (let answerId of answerIds){
+      if (!correctAnswerIds.includes(answerId)){
+        return false;
+      }
+    }
+    return true;
+  }
+  
+  private async checkSortingAnswer(question:Question, answerIds: string[]){
+    let Answers = question.answers.sort((a,b) => a.number - b.number);
+    console.log(Answers);
+    for (let i = 0; i < Answers.length; i++){
+      if (Answers[i].id !== answerIds[i]){
+        return false;
+      }
+    }
+    return true;
   }
   
 }

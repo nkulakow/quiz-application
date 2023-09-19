@@ -13,7 +13,6 @@ export class QuestionResolver {
   @Mutation(() => Question, { name: 'createQuestion' })
   createQuestion(@Args('createQuestionInput') createQuestionInput: CreateQuestionInput, @Args('answersInput',  { type: () => [CreateAnswerInput] }) answersInput: CreateAnswerInput[]) {
     let valueToReturn = this.questionService.create(createQuestionInput, answersInput);
-    console.log("valueToReturn", valueToReturn);
     return valueToReturn;
   }
 
@@ -50,6 +49,11 @@ export class QuestionResolver {
     } else {
       return null;
     }
+  }
+  
+  @Query(() => Boolean, { name: 'checkAnswer' })
+  checkAnswer(@Args('questionId') questionId: string, @Args('answerIds', {type: ()=> [String]}) answerIds: string[]) {
+    return this.questionService.checkAnswer(questionId, answerIds);
   }
   
 }

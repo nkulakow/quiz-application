@@ -25,6 +25,7 @@ type Question {
 type Query {
   getAllQuestions: [Question!]!
   getOneQuestion(id: String!): Question!
+  checkAnswer(questionId: String!, answerIds: [String!]!): Boolean!
   answer(id: String!): Answer!
 }
 

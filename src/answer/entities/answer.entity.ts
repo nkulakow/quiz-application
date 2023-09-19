@@ -1,5 +1,5 @@
 import { ObjectType, Field, Int } from '@nestjs/graphql';
-import { Question } from 'src/question/entities/question.entity';
+import { Question } from '../../../src/question/entities/question.entity';
 import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn  } from "typeorm";
 
 @ObjectType()
@@ -19,7 +19,7 @@ export class Answer {
   number: number;
   
   @ManyToOne(()=>Question, question=>question.answers)
-  @JoinColumn()
+  // @JoinColumn()
   @Field(()=>Question)
   question: Question
   

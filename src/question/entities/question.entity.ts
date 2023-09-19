@@ -1,5 +1,5 @@
 import { ObjectType, Field } from '@nestjs/graphql';
-import { Answer } from 'src/answer/entities/answer.entity';
+import { Answer } from '../../../src/answer/entities/answer.entity';
 import { Column, Entity, PrimaryGeneratedColumn, OneToMany  } from "typeorm";
 
 @ObjectType()
@@ -23,7 +23,7 @@ export class Question {
   @Field({nullable: true})
   @Column({nullable: true})
   plainText: boolean;
-  @OneToMany(()=>Answer, answer=>answer.question)
+  @OneToMany(()=>Answer, answer=>answer.question, { onDelete: 'CASCADE' }) // if question is deleted, delete all answers
   @Field(()=>[Answer])
   answers: Answer[]
   
