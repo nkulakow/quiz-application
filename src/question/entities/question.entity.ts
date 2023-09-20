@@ -1,5 +1,5 @@
 import { ObjectType, Field } from '@nestjs/graphql';
-import { Answer } from '../../../src/answer/entities/answer.entity';
+import { Answer } from '@ent/answer/entities/answer.entity';
 import { Column, Entity, PrimaryGeneratedColumn, OneToMany  } from "typeorm";
 
 @ObjectType()

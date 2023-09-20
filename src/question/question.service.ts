@@ -5,9 +5,9 @@ import { Question } from './entities/question.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateAnswerInput } from 'src/answer/dto/create-answer.input';
-import { Answer } from '../../src/answer/entities/answer.entity';
-import { AnswerService } from '../../src/answer/answer.service';
-import { UpdateAnswerInput } from '../../src/answer/dto/update-answer.input';
+import { Answer } from '@src/answer/entities/answer.entity';
+import { AnswerService } from '@src/answer/answer.service';
+import { UpdateAnswerInput } from '@src/answer/dto/update-answer.input';
 
 @Injectable()
 export class QuestionService {
@@ -74,16 +74,19 @@ export class QuestionService {
     return questionToRemove;
   }
   
-  async checkAnswer(id:string, givenAnswerIds: string[]){
+  async checkAnswer(id:string, givenAnswers: string[]){
     let question = await this.findOne(id);
     if (question.singleAnswer){
-      return this.checkSingleAnswer(question, givenAnswerIds[0]);
+      return this.checkSingleAnswer(question, givenAnswers[0]);
     }
     if (question.multipleAnswer){
-      return this.checkMultipleAnswer(question, givenAnswerIds);
+      return this.checkMultipleAnswer(question, givenAnswers);
     }
     if (question.sorting){
-      return this.checkSortingAnswer(question, givenAnswerIds);
+      return this.checkSortingAnswer(question, givenAnswers);
+    }
+    if (question.plainText){
+      return this.checkPlainTextAnswer(question, givenAnswers[0]);
     }
   }
   
@@ -108,13 +111,18 @@ export class QuestionService {
   
   private async checkSortingAnswer(question:Question, answerIds: string[]){
     let Answers = question.answers.sort((a,b) => a.number - b.number);
-    console.log(Answers);
     for (let i = 0; i < Answers.length; i++){
       if (Answers[i].id !== answerIds[i]){
         return false;
       }
     }
     return true;
+  }
+  
+  private async checkPlainTextAnswer(question:Question, answer: string){
+    let correctAnswer = question.answers[0].answer.toLowerCase().trim().replace(/ +/g, ' ').replace(/[.,-]/g, '');
+    answer = answer.toLowerCase().trim().replace(/ +/g, ' ').replace(/[.,-]/g, '');
+    return correctAnswer === answer;
   }
   
 }
