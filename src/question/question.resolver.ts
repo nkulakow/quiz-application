@@ -3,7 +3,9 @@ import { QuestionService } from './question.service';
 import { Question } from './entities/question.entity';
 import { CreateQuestionInput } from './dto/create-question.input';
 import { UpdateQuestionInput } from './dto/update-question.input';
-import { UpdateAnswerInput } from 'src/answer/dto/update-answer.input';
+import { GiveAnswerInput } from './dto/give-answers.input';
+import { type } from 'os';
+import { ScoreForQuestionOutput } from './dto/score-for-question.output';
 
 @Resolver(() => Question)
 export class QuestionResolver {
@@ -50,9 +52,9 @@ export class QuestionResolver {
     }
   }
   
-  @Query(() => Boolean, { name: 'checkAnswer' })
-  checkAnswer(@Args('questionId') questionId: string, @Args('answerIds', {type: ()=> [String]}) answerIds: string[]) {
-    return this.questionService.checkAnswer(questionId, answerIds);
+  @Query(() => ScoreForQuestionOutput, { name: 'checkAnswer' })
+  checkAnswer(@Args('givenAnswer') givenAnswer: GiveAnswerInput) {
+    return this.questionService.checkAnswer(givenAnswer);
   }
   
 }

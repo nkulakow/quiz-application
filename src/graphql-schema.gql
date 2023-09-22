@@ -30,12 +30,38 @@ type Question {
   quizId: String!
 }
 
+type AnswerForScoreOutput {
+  id: String
+  answer: String!
+}
+
+type ScoreForQuestionOutput {
+  id: String!
+  question: String!
+  answered: Boolean!
+  correct: Boolean!
+  givenAnswers: [AnswerForScoreOutput!]
+  correctAnswers: [AnswerForScoreOutput!]!
+}
+
+type GetScoreOutput {
+  quizId: String!
+  score: Float!
+  questions: [ScoreForQuestionOutput!]!
+}
+
 type Query {
   getAllQuestions: [Question!]!
   getOneQuestion(id: String!): Question!
-  checkAnswer(questionId: String!, answerIds: [String!]!): Boolean!
+  checkAnswer(givenAnswer: GiveAnswerInput!): ScoreForQuestionOutput!
   getAllQuizzes: [Quiz!]!
   getOneQuiz(id: String!): Quiz!
+  submitAnswers(id: String!, givenAnswers: [GiveAnswerInput!]!): GetScoreOutput!
+}
+
+input GiveAnswerInput {
+  questionId: String!
+  answers: [String!]!
 }
 
 type Mutation {

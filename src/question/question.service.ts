@@ -7,6 +7,9 @@ import { Repository } from 'typeorm';
 import { Answer } from '@src/answer/entities/answer.entity';
 import { AnswerService } from '@src/answer/answer.service';
 import { UpdateAnswerInput } from '@src/answer/dto/update-answer.input';
+import { GiveAnswerInput } from './dto/give-answers.input';
+import { ScoreForQuestionOutput } from './dto/score-for-question.output';
+import { AnswerForScoreOutput } from '@src/answer/dto/answer-for-score.output';
 
 @Injectable()
 export class QuestionService {
@@ -75,55 +78,103 @@ export class QuestionService {
     return questionToRemove;
   }
   
-  async checkAnswer(id:string, givenAnswers: string[]){
-    let question = await this.findOne(id);
+  async checkAnswer(givenAnswer: GiveAnswerInput){
+    let question = await this.findOne(givenAnswer.questionId);
     if (question.singleAnswer){
-      return this.checkSingleAnswer(question, givenAnswers[0]);
+      return this.checkSingleAnswer(question, givenAnswer.answers[0]);
     }
     if (question.multipleAnswer){
-      return this.checkMultipleAnswer(question, givenAnswers);
+      return this.checkMultipleAnswer(question, givenAnswer.answers);
     }
     if (question.sorting){
-      return this.checkSortingAnswer(question, givenAnswers);
+      return this.checkSortingAnswer(question, givenAnswer.answers);
     }
     if (question.plainText){
-      return this.checkPlainTextAnswer(question, givenAnswers[0]);
+      return this.checkPlainTextAnswer(question, givenAnswer.answers[0]);
     }
   }
   
   private checkSingleAnswer(question:Question, answerId: string){
     let correctAnswer = question.answers.find(answer => answer.correct);
-    return correctAnswer.id === answerId;
+    let givenAnswers = [question.answers.find(answer => answer.id === answerId).id];
+    let scoreForQuestion = this.createScoreForQuestionOutput(question, correctAnswer.id === answerId, [correctAnswer.id], givenAnswers);
+    return scoreForQuestion;
   }
   
   private checkMultipleAnswer(question:Question, answerIds: string[]){
     let correctAnswers = question.answers.filter(answer => answer.correct);
     let correctAnswerIds = correctAnswers.map(answer => answer.id);
+    let isCorrect = true;
     if (correctAnswerIds.length !== answerIds.length){
-      return false;
+      isCorrect = false;
     }
     for (let answerId of answerIds){
       if (!correctAnswerIds.includes(answerId)){
-        return false;
+        isCorrect = false;
       }
     }
-    return true;
+    return this.createScoreForQuestionOutput(question, isCorrect, correctAnswerIds, answerIds);
   }
   
   private async checkSortingAnswer(question:Question, answerIds: string[]){
     let Answers = question.answers.sort((a,b) => a.number - b.number);
+    let isCorrect = true;
     for (let i = 0; i < Answers.length; i++){
       if (Answers[i].id !== answerIds[i]){
-        return false;
+        isCorrect = false;
       }
     }
-    return true;
+    let correctAnswerIds = Answers.map(answer => answer.id);
+    return this.createScoreForQuestionOutput(question, isCorrect, correctAnswerIds, answerIds);
   }
   
   private async checkPlainTextAnswer(question:Question, answer: string){
     let correctAnswer = question.answers[0].answer.toLowerCase().trim().replace(/ +/g, ' ').replace(/[.,-]/g, '');
-    answer = answer.toLowerCase().trim().replace(/ +/g, ' ').replace(/[.,-]/g, '');
-    return correctAnswer === answer;
+    let trimmedAnswer = answer.toLowerCase().trim().replace(/ +/g, ' ').replace(/[.,-]/g, '');
+    let scoreForQuestion = new ScoreForQuestionOutput();
+    scoreForQuestion.answered = true;
+    scoreForQuestion.correct = correctAnswer === trimmedAnswer;
+    scoreForQuestion.id = question.id;
+    scoreForQuestion.question = question.question;
+    scoreForQuestion.correctAnswers = [new AnswerForScoreOutput(null, question.answers[0].answer)];
+    scoreForQuestion.givenAnswers = [new AnswerForScoreOutput(null, answer)];
+    return scoreForQuestion;
+  }
+  
+  private createScoreForQuestionOutput(question: Question, correct:boolean, correctAnswersIds: string[], givenAnswersIds: string[]){
+    let scoreForQuestion = new ScoreForQuestionOutput();
+    scoreForQuestion.answered = true;
+    scoreForQuestion.correct = correct;
+    scoreForQuestion.id = question.id;
+    scoreForQuestion.question = question.question;
+    let correctAnswers = [];
+    for (let correctAnswerId of correctAnswersIds){
+      let correctAnswer = question.answers.find(answer => answer.id === correctAnswerId);
+      if (question.sorting){correctAnswers.push(new AnswerForScoreOutput(correctAnswer.id, correctAnswer.answer + ' - ' + correctAnswer.number));}
+      else{correctAnswers.push(new AnswerForScoreOutput(correctAnswer.id, correctAnswer.answer));}
+    }
+    scoreForQuestion.correctAnswers = correctAnswers;
+    let givenAnswers = [];
+    for (let index:number = 0; index < givenAnswersIds.length; index++){
+      let givenAnswer = question.answers.find(answer => answer.id === givenAnswersIds[index]);
+      if (question.sorting){givenAnswers.push(new AnswerForScoreOutput(givenAnswer.id, givenAnswer.answer + ' - ' + (index+1)));}
+      else{givenAnswers.push(new AnswerForScoreOutput(givenAnswer.id, givenAnswer.answer));}
+    }
+    scoreForQuestion.givenAnswers = givenAnswers;
+    return scoreForQuestion;
+  }
+ 
+  
+  getCorrectAnswers (question: Question) : Answer[]{
+    let correctAnswers: Answer[] = [];
+    if (question.plainText){ return question.answers;}
+    if (question.sorting) {
+      correctAnswers = [...question.answers.sort((a,b) => a.number - b.number)];
+      correctAnswers.forEach(answer => answer.answer = answer.answer + ' - ' + answer.number);
+      return correctAnswers;
+    }
+    correctAnswers = question.answers.filter(answer => answer.correct);
+    return correctAnswers;
   }
   
 }
