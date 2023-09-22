@@ -13,23 +13,9 @@ export class AnswerResolver {
     return this.answerService.create(createAnswerInput);
   }
 
-  @Query(() => [Answer], { name: 'answer' })
-  findAll() {
-    return this.answerService.findAll();
-  }
-
-  @Query(() => Answer, { name: 'answer' })
-  findOne(@Args('id') id: string) {
-    return this.answerService.findOne(id);
-  }
-
   @Mutation(() => Answer)
   updateAnswer(@Args('updateAnswerInput') updateAnswerInput: UpdateAnswerInput) {
     return this.answerService.update(updateAnswerInput);
   }
 
-  @Mutation(() => Answer)
-  removeAnswer(@Args('id') id: string) {
-    return this.answerService.remove(id);
-  }
 }

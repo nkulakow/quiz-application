@@ -36,10 +36,11 @@ export class QuestionService {
     return this.questionRepository.findOne({where : {id: id},  relations: ["answers"] });
   }
 
-  async update( updateQuestionInput: UpdateQuestionInput, updateAnswersInput: UpdateAnswerInput[]) {
+  async update( updateQuestionInput: UpdateQuestionInput) {
     if (!this.findOne(updateQuestionInput.id)) {
       throw new NotFoundException(`Question with id ${updateQuestionInput.id} not found`);
     }
+    let updateAnswersInput = updateQuestionInput.answers;
     try{
       await this.updateAnswers(updateAnswersInput, updateQuestionInput.id);
     }
@@ -67,7 +68,7 @@ export class QuestionService {
     if (!questionToRemove) {
       throw new NotFoundException(`Question with id ${id} not found`);
     }
-    const answersToRemove = await this.answerRepository.find({ where : {question: questionToRemove} });
+    const answersToRemove = questionToRemove.answers;
     await this.answerRepository.remove(answersToRemove);
     await this.questionRepository.remove(questionToRemove); 
     questionToRemove.id = id;

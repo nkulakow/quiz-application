@@ -14,10 +14,6 @@ export class AnswerService {
     return this.answerRepository.save(answerToCreate);
   }
 
-  findAll() {
-    return `This action returns all answer`;
-  }
-
   findOne(id: string) {
     return this.answerRepository.findOne({where : {id: id},  relations: ["question"] });
   }
@@ -30,7 +26,4 @@ export class AnswerService {
     return this.answerRepository.save(answerToUpdate);
   }
 
-  remove(id: string) {
-    return `This action removes a #${id} answer`;
-  }
 }

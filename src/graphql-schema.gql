@@ -14,7 +14,7 @@ type Answer {
 type Quiz {
   id: String!
   name: String!
-  questions: [Question!]!
+  questions: [Question!]
 }
 
 type Question {
@@ -26,25 +26,24 @@ type Question {
   plainText: Boolean
   answers: [Answer!]!
   type: String
-  quiz: Quiz
-  quizId: String
+  quiz: Quiz!
+  quizId: String!
 }
 
 type Query {
   getAllQuestions: [Question!]!
   getOneQuestion(id: String!): Question!
   checkAnswer(questionId: String!, answerIds: [String!]!): Boolean!
-  answer(id: String!): Answer!
-  quiz(id: String!): Quiz!
+  getAllQuizzes: [Quiz!]!
+  getOneQuiz(id: String!): Quiz!
 }
 
 type Mutation {
   createQuestion(createQuestionInput: CreateQuestionInput!): Question!
-  updateQuestion(updateQuestionInput: UpdateQuestionInput!, updateAnswersInput: [UpdateAnswerInput!]!): Question!
+  updateQuestion(updateQuestionInput: UpdateQuestionInput!): Question!
   removeQuestion(id: String!): Question!
   createAnswer(createAnswerInput: CreateAnswerInput!): Answer!
   updateAnswer(updateAnswerInput: UpdateAnswerInput!): Answer!
-  removeAnswer(id: String!): Answer!
   createQuiz(createQuizInput: CreateQuizInput!): Quiz!
   updateQuiz(updateQuizInput: UpdateQuizInput!): Quiz!
   removeQuiz(id: String!): Quiz!
@@ -74,6 +73,7 @@ input UpdateQuestionInput {
   multipleAnswer: Boolean
   sorting: Boolean
   plainText: Boolean
+  answers: [UpdateAnswerInput!]
 }
 
 input UpdateAnswerInput {

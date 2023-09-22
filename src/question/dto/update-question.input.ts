@@ -1,4 +1,5 @@
 import { InputType, Field } from '@nestjs/graphql';
+import { UpdateAnswerInput } from '@ent/answer/dto/update-answer.input';
 
 @InputType()
 export class UpdateQuestionInput  {
@@ -14,4 +15,7 @@ export class UpdateQuestionInput  {
   sorting: boolean;
   @Field({nullable: true})
   plainText: boolean;
+  
+  @Field(()=>[UpdateAnswerInput], {nullable: true})
+  answers: UpdateAnswerInput[]
 }

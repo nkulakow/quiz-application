@@ -1,11 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateQuizInput } from './dto/create-quiz.input';
 import { UpdateQuizInput } from './dto/update-quiz.input';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Quiz } from './entities/quiz.entity';
 import { Question } from '@src/question/entities/question.entity'
 import { Repository } from 'typeorm';
-import { CreateQuestionInput } from '@src/question/dto/create-question.input';
 import { QuestionService } from '@src/question/question.service';
 import { Answer } from '@src/answer/entities/answer.entity';
 
@@ -31,18 +30,33 @@ export class QuizService {
   }
 
   findAll() {
-    return `This action returns all quiz`;
+    return this.quizRepository.find({ relations: ["questions", "questions.answers"] });
   }
 
   findOne(id: string) {
-    return `This action returns a #${id} quiz`;
+    return this.quizRepository.findOne({ where: {id: id}, relations: ["questions", "questions.answers"] });
   }
 
-  update(id: string, updateQuizInput: UpdateQuizInput) {
-    return `This action updates a #${id} quiz`;
+  update(updateQuizInput: UpdateQuizInput) {
+    if (!this.findOne(updateQuizInput.id)) {
+      throw new NotFoundException(`Quiz with id ${updateQuizInput.id} not found`);
+    }
+    let quizToUpdate = this.quizRepository.create(updateQuizInput);
+    return this.quizRepository.save(quizToUpdate);
   }
 
-  remove(id: string) {
-    return `This action removes a #${id} quiz`;
+  async remove(id: string) {
+    let quizToRemove = await this.findOne(id);
+    if (!quizToRemove) {
+      throw new NotFoundException(`Quiz with id ${id} not found`);
+    }
+    const questionsToRemove = quizToRemove.questions;
+    const QuestionServiceInstance = new QuestionService(this.questionRepository, this.answerRepository);
+    for (let question of questionsToRemove) {
+      await QuestionServiceInstance.remove(question.id);
+    }
+    await this.quizRepository.remove(quizToRemove);
+    quizToRemove.id = id;
+    return quizToRemove;
   }
 }

@@ -3,7 +3,6 @@ import { QuizService } from './quiz.service';
 import { Quiz } from './entities/quiz.entity';
 import { CreateQuizInput } from './dto/create-quiz.input';
 import { UpdateQuizInput } from './dto/update-quiz.input';
-import { CreateQuestionInput } from '@src/question/dto/create-question.input';
 
 @Resolver(() => Quiz)
 export class QuizResolver {
@@ -14,19 +13,19 @@ export class QuizResolver {
     return this.quizService.create(createQuizInput);
   }
 
-  @Query(() => [Quiz], { name: 'quiz' })
+  @Query(() => [Quiz], { name: 'getAllQuizzes' })
   findAll() {
     return this.quizService.findAll();
   }
 
-  @Query(() => Quiz, { name: 'quiz' })
+  @Query(() => Quiz, { name: 'getOneQuiz' })
   findOne(@Args('id') id: string) {
     return this.quizService.findOne(id);
   }
 
   @Mutation(() => Quiz)
   updateQuiz(@Args('updateQuizInput') updateQuizInput: UpdateQuizInput) {
-    return this.quizService.update(updateQuizInput.id, updateQuizInput);
+    return this.quizService.update(updateQuizInput);
   }
 
   @Mutation(() => Quiz)

@@ -31,12 +31,12 @@ export class Question {
   @Field({nullable: true})
   type: string;
   
-  @ManyToOne(()=>Quiz, quiz=>quiz.questions, {nullable: true})
-  @Field(()=>Quiz, {nullable: true})
+  @ManyToOne(()=>Quiz, quiz=>quiz.questions)
+  @Field(()=>Quiz)
   quiz: Quiz
   
-  @Field({nullable: true})
-  @Column({nullable: true})
+  @Field()
+  @Column()
   quizId: string;
   
 }

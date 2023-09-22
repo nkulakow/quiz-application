@@ -12,7 +12,7 @@ export class Quiz {
   @Column()
   name: string;
   
-  @OneToMany(()=>Question, question=>question.quiz, { onDelete: 'CASCADE' }) 
-  @Field(()=>[Question])
+  @OneToMany(()=>Question, question=>question.quiz, { onDelete: 'CASCADE' , nullable: true}) 
+  @Field(()=>[Question], {nullable: true})
   questions: Question[]
 }

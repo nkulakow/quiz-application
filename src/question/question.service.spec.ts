@@ -151,7 +151,7 @@ describe('QuestionService', () => {
     const updateQuestionInput = new UpdateQuestionInput();
     updateQuestionInput.question = 'Choose the capital of France:';
     updateQuestionInput.id = 'custom-question-id';
-    const updateAnswersInput = [];
+    updateQuestionInput.answers = [];
 
     questionRepositoryMock.create = jest.fn().mockImplementation((entity) => {
       entity.id = 'custom-question-id';
@@ -184,7 +184,7 @@ describe('QuestionService', () => {
 
     
     await service.create(createQuestionInput);
-    const updatedQuestion = await service.update(updateQuestionInput, updateAnswersInput);
+    const updatedQuestion = await service.update(updateQuestionInput);
     expect(updatedQuestion.question).toEqual(updateQuestionInput.question);
     expect(updatedQuestion.singleAnswer).toEqual(true);
   });
@@ -217,6 +217,7 @@ describe('QuestionService', () => {
     updateAnswersInput[0].id = 'generated-answer-id';
     updateAnswersInput[0].answer = 'Paris!!!';
     updateAnswersInput[0].correct = true;
+    updateQuestionInput.answers = updateAnswersInput;
 
     questionRepositoryMock.create = jest.fn().mockImplementation((entity) => {
       entity.id = 'custom-question-id';
@@ -266,7 +267,7 @@ describe('QuestionService', () => {
     });
     
     await service.create(createQuestionInput);
-    expect(service.update(updateQuestionInput, updateAnswersInput)).rejects.toThrow(AnswerDoesNotBelongToQuestionException);
+    expect(service.update(updateQuestionInput)).rejects.toThrow(AnswerDoesNotBelongToQuestionException);
 
   });
 

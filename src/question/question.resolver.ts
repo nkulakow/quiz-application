@@ -26,8 +26,8 @@ export class QuestionResolver {
   }
 
   @Mutation(() => Question)
-  updateQuestion(@Args('updateQuestionInput') updateQuestionInput: UpdateQuestionInput, @Args('updateAnswersInput',  { type: () => [UpdateAnswerInput] }) updateAnswersInput: UpdateAnswerInput[]) {
-    return this.questionService.update(updateQuestionInput, updateAnswersInput);
+  updateQuestion(@Args('updateQuestionInput') updateQuestionInput: UpdateQuestionInput) {
+    return this.questionService.update(updateQuestionInput);
   }
 
   @Mutation(() => Question)
