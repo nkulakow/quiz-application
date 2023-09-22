@@ -1,4 +1,5 @@
 import { InputType, Field } from '@nestjs/graphql';
+import { CreateAnswerInput } from '@ent/answer/dto/create-answer.input';
 
 @InputType()
 export class CreateQuestionInput {
@@ -12,4 +13,10 @@ export class CreateQuestionInput {
   sorting: boolean;
   @Field({nullable: true})
   plainText: boolean;
+  
+  @Field(()=>[CreateAnswerInput], {nullable: true})
+  answers: CreateAnswerInput[]
+  
+  @Field({nullable: true})
+  quizId: string;
 }

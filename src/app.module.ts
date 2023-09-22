@@ -7,9 +7,10 @@ import { join } from 'path';
 import { ApolloDriver } from '@nestjs/apollo';;
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AnswerModule } from './answer/answer.module';
+import { QuizModule } from './quiz/quiz.module';
 
 @Module({
-  imports: [QuestionModule, AnswerModule, GraphQLModule.forRoot(
+  imports: [QuestionModule, AnswerModule, QuizModule, GraphQLModule.forRoot(
     {driver: ApolloDriver, autoSchemaFile: join(process.cwd(), 'src/graphql-schema.gql'),}
   ),
 TypeOrmModule.forRoot({
@@ -22,7 +23,6 @@ TypeOrmModule.forRoot({
   entities: ["dist/**/*.entity{.ts,.js}"],
   synchronize: true,
 }),
-AnswerModule,
 ],
   controllers: [AppController],
   providers: [AppService],

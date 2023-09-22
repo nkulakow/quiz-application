@@ -19,7 +19,6 @@ export class Answer {
   number: number;
   
   @ManyToOne(()=>Question, question=>question.answers)
-  // @JoinColumn()
   @Field(()=>Question)
   question: Question
   

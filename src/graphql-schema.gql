@@ -11,6 +11,12 @@ type Answer {
   questionId: String!
 }
 
+type Quiz {
+  id: String!
+  name: String!
+  questions: [Question!]!
+}
+
 type Question {
   id: String!
   question: String!
@@ -20,6 +26,8 @@ type Question {
   plainText: Boolean
   answers: [Answer!]!
   type: String
+  quiz: Quiz
+  quizId: String
 }
 
 type Query {
@@ -27,15 +35,19 @@ type Query {
   getOneQuestion(id: String!): Question!
   checkAnswer(questionId: String!, answerIds: [String!]!): Boolean!
   answer(id: String!): Answer!
+  quiz(id: String!): Quiz!
 }
 
 type Mutation {
-  createQuestion(createQuestionInput: CreateQuestionInput!, answersInput: [CreateAnswerInput!]!): Question!
+  createQuestion(createQuestionInput: CreateQuestionInput!): Question!
   updateQuestion(updateQuestionInput: UpdateQuestionInput!, updateAnswersInput: [UpdateAnswerInput!]!): Question!
   removeQuestion(id: String!): Question!
   createAnswer(createAnswerInput: CreateAnswerInput!): Answer!
   updateAnswer(updateAnswerInput: UpdateAnswerInput!): Answer!
   removeAnswer(id: String!): Answer!
+  createQuiz(createQuizInput: CreateQuizInput!): Quiz!
+  updateQuiz(updateQuizInput: UpdateQuizInput!): Quiz!
+  removeQuiz(id: String!): Quiz!
 }
 
 input CreateQuestionInput {
@@ -44,6 +56,8 @@ input CreateQuestionInput {
   multipleAnswer: Boolean
   sorting: Boolean
   plainText: Boolean
+  answers: [CreateAnswerInput!]
+  quizId: String
 }
 
 input CreateAnswerInput {
@@ -68,4 +82,14 @@ input UpdateAnswerInput {
   number: Int
   questionId: String
   id: String!
+}
+
+input CreateQuizInput {
+  name: String!
+  questions: [CreateQuestionInput!]!
+}
+
+input UpdateQuizInput {
+  id: String!
+  name: String!
 }

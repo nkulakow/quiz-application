@@ -7,7 +7,6 @@ import { CreateQuestionInput } from "../../src/question/dto/create-question.inpu
 import { CreateAnswerInput } from "../../src/answer/dto/create-answer.input";
 import { UpdateQuestionInput } from "../../src/question/dto/update-question.input";
 import { UpdateAnswerInput } from "../../src/answer/dto/update-answer.input";
-import { async } from "rxjs";
 
 interface EntityWithId {
   id: string;
@@ -92,6 +91,7 @@ describe('QuestionService', () => {
     answersInput[0].correct = true;
     answersInput[1].answer = 'London';
     answersInput[1].correct = false;
+    createQuestionInput.answers = answersInput;
 
     questionRepositoryMock.create = jest.fn().mockReturnValue(createQuestionInput);
     questionRepositoryMock.save = jest.fn().mockReturnValue(createQuestionInput);
@@ -102,7 +102,7 @@ describe('QuestionService', () => {
     answerRepositoryMock.save = jest.fn().mockImplementation((answer) => answer);
 
     // Act
-    const createdQuestion = await service.create(createQuestionInput, answersInput);
+    const createdQuestion = await service.create(createQuestionInput);
 
     // Assert
     expect(createdQuestion).toEqual(createQuestionInput);
@@ -146,6 +146,7 @@ describe('QuestionService', () => {
     answersInput[0].correct = true;
     answersInput[1].answer = 'London';
     answersInput[1].correct = false;
+    createQuestionInput.answers = answersInput;
     
     const updateQuestionInput = new UpdateQuestionInput();
     updateQuestionInput.question = 'Choose the capital of France:';
@@ -182,7 +183,7 @@ describe('QuestionService', () => {
     answerRepositoryMock.save = jest.fn().mockImplementation((answer) => answer);
 
     
-    await service.create(createQuestionInput, answersInput);
+    await service.create(createQuestionInput);
     const updatedQuestion = await service.update(updateQuestionInput, updateAnswersInput);
     expect(updatedQuestion.question).toEqual(updateQuestionInput.question);
     expect(updatedQuestion.singleAnswer).toEqual(true);
@@ -205,6 +206,7 @@ describe('QuestionService', () => {
     answersInput[0].correct = true;
     answersInput[1].answer = 'London';
     answersInput[1].correct = false;
+    createQuestionInput.answers = answersInput;
     
     const updateQuestionInput = new UpdateQuestionInput();
     updateQuestionInput.question = 'Choose the capital of France:';
@@ -263,7 +265,7 @@ describe('QuestionService', () => {
       return foundEntity || undefined;
     });
     
-    await service.create(createQuestionInput, answersInput);
+    await service.create(createQuestionInput);
     expect(service.update(updateQuestionInput, updateAnswersInput)).rejects.toThrow(AnswerDoesNotBelongToQuestionException);
 
   });
@@ -285,6 +287,7 @@ describe('QuestionService', () => {
     answersInput[0].correct = true;
     answersInput[1].answer = 'London';
     answersInput[1].correct = false;
+    createQuestionInput.answers = answersInput;
 
     questionRepositoryMock.create = jest.fn().mockImplementation((entity) => {
       entity.id = 'custom-question-id';
@@ -315,7 +318,7 @@ describe('QuestionService', () => {
     }));
     answerRepositoryMock.save = jest.fn().mockImplementation((answer) => answer);
     
-    await service.create(createQuestionInput, answersInput);
+    await service.create(createQuestionInput);
     const answer = await service.checkAnswer('custom-question-id', ['generated-answer-id-Paris']);
     expect(answer).toBe(true);
     const incorrectAnswer = await service.checkAnswer('custom-question-id', ['generated-answer-id-London']);
@@ -345,7 +348,7 @@ describe('QuestionService', () => {
     answersInput[2].correct = false;
     answersInput[3].answer = 'Tokyo';
     answersInput[3].correct = false;
-    
+    createQuestionInput.answers = answersInput;
 
     questionRepositoryMock.create = jest.fn().mockImplementation((entity) => {
       entity.id = 'custom-question-id';
@@ -376,7 +379,7 @@ describe('QuestionService', () => {
     }));
     answerRepositoryMock.save = jest.fn().mockImplementation((answer) => answer);
     
-    await service.create(createQuestionInput, answersInput);
+    await service.create(createQuestionInput);
     const answer = await service.checkAnswer('custom-question-id', ['generated-answer-id-Paris', 'generated-answer-id-London']);
     expect(answer).toBe(true);
     const incorrectAnswer1 = await service.checkAnswer('custom-question-id', ['generated-answer-id-Tokyo']);
@@ -407,6 +410,7 @@ describe('QuestionService', () => {
     answersInput[1].number = 3;
     answersInput[2].answer = '990';
     answersInput[2].number = 1;
+    createQuestionInput.answers = answersInput;
     
 
     questionRepositoryMock.create = jest.fn().mockImplementation((entity) => {
@@ -438,7 +442,7 @@ describe('QuestionService', () => {
     }));
     answerRepositoryMock.save = jest.fn().mockImplementation((answer) => answer);
     
-    await service.create(createQuestionInput, answersInput);
+    await service.create(createQuestionInput);
     const answer = await service.checkAnswer('custom-question-id', ['generated-answer-id-990', 'generated-answer-id-1290', 'generated-answer-id-1900']);
     expect(answer).toBe(true);
     const incorrectAnswer1 = await service.checkAnswer('custom-question-id', ['generated-answer-id-1290', 'generated-answer-id-1900', 'generated-answer-id-990']);
@@ -460,6 +464,7 @@ describe('QuestionService', () => {
       new CreateAnswerInput(),
     ];
     answersInput[0].answer = 'San Salvador';
+    createQuestionInput.answers = answersInput;
 
     questionRepositoryMock.create = jest.fn().mockImplementation((entity) => {
       entity.id = 'custom-question-id';
@@ -490,7 +495,7 @@ describe('QuestionService', () => {
     }));
     answerRepositoryMock.save = jest.fn().mockImplementation((answer) => answer);
     
-    await service.create(createQuestionInput, answersInput);
+    await service.create(createQuestionInput);
     const correctAnswer1 = await service.checkAnswer('custom-question-id', ['San Salvador']);
     expect(correctAnswer1).toBe(true);
     const correctAnswer2 = await service.checkAnswer('custom-question-id', ['  san SAlvador.  ']);

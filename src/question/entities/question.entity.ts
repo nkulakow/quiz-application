@@ -1,6 +1,7 @@
 import { ObjectType, Field } from '@nestjs/graphql';
 import { Answer } from '@ent/answer/entities/answer.entity';
-import { Column, Entity, PrimaryGeneratedColumn, OneToMany  } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn, OneToMany, ManyToOne  } from "typeorm";
+import { Quiz } from '@ent/quiz/entities/quiz.entity';
 
 @ObjectType()
 @Entity()
@@ -29,6 +30,14 @@ export class Question {
   
   @Field({nullable: true})
   type: string;
+  
+  @ManyToOne(()=>Quiz, quiz=>quiz.questions, {nullable: true})
+  @Field(()=>Quiz, {nullable: true})
+  quiz: Quiz
+  
+  @Field({nullable: true})
+  @Column({nullable: true})
+  quizId: string;
   
 }
 
