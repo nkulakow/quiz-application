@@ -28,6 +28,7 @@ type Question {
   type: String
   quiz: Quiz!
   quizId: String!
+  possibleAnswers: [Answer!]
 }
 
 type AnswerForScoreOutput {
@@ -103,11 +104,11 @@ input UpdateQuestionInput {
 }
 
 input UpdateAnswerInput {
+  id: String!
   answer: String!
   correct: Boolean
   number: Int
   questionId: String
-  id: String!
 }
 
 input CreateQuizInput {

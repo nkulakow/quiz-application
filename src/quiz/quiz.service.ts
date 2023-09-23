@@ -74,17 +74,14 @@ export class QuizService {
     for (let givenAnswer of givenAnswers){
       const scoreForQuestion = await QuestionServiceInstance.checkAnswer(givenAnswer);
       if (scoreForQuestion.correct) score++;
-      console.log(scoreForQuestion);
       getScoreOutput.questions.push(scoreForQuestion);
       answeredQuestionsIds.push(givenAnswer.questionId);
     }
-    getScoreOutput.score = score;
     let quiz = await this.findOne(id);
     getScoreOutput.score = (score*100)/quiz.questions.length;
     for (let question of quiz.questions){
       if (answeredQuestionsIds.includes(question.id)) continue;
       else{
-        console.log("AAAAAAAAA", question.id, answeredQuestionsIds);
         let scoreForQuestion = new ScoreForQuestionOutput();
         scoreForQuestion.id = question.id;
         scoreForQuestion.answered = false;
@@ -93,7 +90,6 @@ export class QuizService {
         scoreForQuestion.question = question.question;
         let correctAnswers = QuestionServiceInstance.getCorrectAnswers(question); 
         scoreForQuestion.correctAnswers = []; 
-        console.log("BBAAA", correctAnswers);
         for (let answer of correctAnswers){
           scoreForQuestion.correctAnswers.push(new AnswerForScoreOutput(answer.id, answer.answer));
         }

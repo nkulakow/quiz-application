@@ -1,5 +1,5 @@
 import { ObjectType, Field} from '@nestjs/graphql';
-import { AnswerForScoreOutput } from '@src/answer/dto/answer-for-score.output';
+import { AnswerForScoreOutput } from '@ent/answer/dto/answer-for-score.output';
 
 @ObjectType()
 export class ScoreForQuestionOutput {

@@ -6,6 +6,7 @@ import { UpdateQuestionInput } from './dto/update-question.input';
 import { GiveAnswerInput } from './dto/give-answers.input';
 import { type } from 'os';
 import { ScoreForQuestionOutput } from './dto/score-for-question.output';
+import { Answer } from '@src/answer/entities/answer.entity';
 
 @Resolver(() => Question)
 export class QuestionResolver {
@@ -50,6 +51,12 @@ export class QuestionResolver {
     } else {
       return null;
     }
+  }
+  
+  @ResolveField(() => [Answer], { nullable: true })
+  possibleAnswers(@Parent() question: Question): Answer[] | null {
+    if (question.plainText) return null;
+    return question.answers;
   }
   
   @Query(() => ScoreForQuestionOutput, { name: 'checkAnswer' })
