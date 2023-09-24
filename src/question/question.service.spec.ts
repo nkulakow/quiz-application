@@ -79,10 +79,8 @@ describe('QuestionService', () => {
     }));
     answerRepositoryMock.save = jest.fn().mockImplementation((answer) => answer);
 
-    // Act
     const createdQuestion = await service.create(createQuestionInput);
 
-    // Assert
     expect(createdQuestion).toEqual(createQuestionInput);
     expect(createdQuestion.answers).toHaveLength(answersInput.length);
     expect(questionRepositoryMock.create).toHaveBeenCalledWith(createQuestionInput);

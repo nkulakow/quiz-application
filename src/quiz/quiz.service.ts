@@ -8,9 +8,9 @@ import { Repository } from 'typeorm';
 import { QuestionService } from '@src/question/question.service';
 import { Answer } from '@src/answer/entities/answer.entity';
 import { GiveAnswerInput } from '@src/question/dto/give-answers.input';
-import { GetScoreOutput } from './dto/get-score.output';
-import { ScoreForQuestionOutput } from '@src/question/dto/score-for-question.output';
-import { AnswerForScoreOutput } from '@src/answer/dto/answer-for-score.output';
+import { GetResultOutput } from './dto/get-result.output';
+import { ResultForQuestionOutput } from '@src/question/dto/result-for-question.output';
+import { AnswerForResultOutput } from '@src/answer/dto/answer-for-result.output';
 
 @Injectable()
 export class QuizService {
@@ -67,37 +67,48 @@ export class QuizService {
   async submitAnswers(id: string, givenAnswers: GiveAnswerInput[]) {
     let score = 0;
     const QuestionServiceInstance = new QuestionService(this.questionRepository, this.answerRepository);
-    let getScoreOutput = new GetScoreOutput();
-    getScoreOutput.quizId = id;
-    getScoreOutput.questions = [];
+    let getResultOutput = new GetResultOutput();
+    getResultOutput.quizId = id;
+    getResultOutput.questions = [];
     let answeredQuestionsIds = [];
-    for (let givenAnswer of givenAnswers){
+    
+    for (let givenAnswer of givenAnswers) await processAnswer(givenAnswer);
+    let quiz = await this.findOne(id);
+    getResultOutput.score = (score*100)/quiz.questions.length;
+    processUnansweredQuestions(quiz);
+    
+    return getResultOutput;
+    
+    
+    async function processAnswer(givenAnswer: GiveAnswerInput) {
       const scoreForQuestion = await QuestionServiceInstance.checkAnswer(givenAnswer);
       if (scoreForQuestion.correct) score++;
-      getScoreOutput.questions.push(scoreForQuestion);
+      getResultOutput.questions.push(scoreForQuestion);
       answeredQuestionsIds.push(givenAnswer.questionId);
     }
-    let quiz = await this.findOne(id);
-    getScoreOutput.score = (score*100)/quiz.questions.length;
-    for (let question of quiz.questions){
-      if (answeredQuestionsIds.includes(question.id)) continue;
-      else{
-        let scoreForQuestion = new ScoreForQuestionOutput();
-        scoreForQuestion.id = question.id;
-        scoreForQuestion.answered = false;
-        scoreForQuestion.correct = false;
-        scoreForQuestion.givenAnswers = [];
-        scoreForQuestion.question = question.question;
-        let correctAnswers = QuestionServiceInstance.getCorrectAnswers(question); 
-        scoreForQuestion.correctAnswers = []; 
-        for (let answer of correctAnswers){
-          scoreForQuestion.correctAnswers.push(new AnswerForScoreOutput(answer.id, answer.answer));
-        }
-       
-        getScoreOutput.questions.push(scoreForQuestion);
+    
+    async function processUnansweredQuestions(quiz: Quiz) {
+      for (let question of quiz.questions) {
+          if (!answeredQuestionsIds.includes(question.id)) {
+          
+          const scoreForQuestion = await createScoreForUnansweredQuestion(question);
+          getResultOutput.questions.push(scoreForQuestion);
+          }
       }
     }
-    return getScoreOutput;
     
+    async function createScoreForUnansweredQuestion(question: Question) {
+      const scoreForQuestion = new ResultForQuestionOutput();
+      scoreForQuestion.id = question.id;
+      scoreForQuestion.answered = false;
+      scoreForQuestion.correct = false;
+      scoreForQuestion.givenAnswers = [];
+      scoreForQuestion.question = question.question;
+      const correctAnswers = QuestionServiceInstance.getCorrectAnswers(question);
+      scoreForQuestion.correctAnswers = correctAnswers.map(answer =>
+          new AnswerForResultOutput(answer.id, answer.answer)
+      );
+      return scoreForQuestion;
+    }
   }
 }

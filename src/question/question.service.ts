@@ -8,8 +8,8 @@ import { Answer } from '@src/answer/entities/answer.entity';
 import { AnswerService } from '@src/answer/answer.service';
 import { UpdateAnswerInput } from '@src/answer/dto/update-answer.input';
 import { GiveAnswerInput } from './dto/give-answers.input';
-import { ScoreForQuestionOutput } from './dto/score-for-question.output';
-import { AnswerForScoreOutput } from '@src/answer/dto/answer-for-score.output';
+import { ResultForQuestionOutput } from './dto/result-for-question.output';
+import { AnswerForResultOutput } from '@src/answer/dto/answer-for-result.output';
 
 @Injectable()
 export class QuestionService {
@@ -97,7 +97,7 @@ export class QuestionService {
   private checkSingleAnswer(question:Question, answerId: string){
     let correctAnswer = question.answers.find(answer => answer.correct);
     let givenAnswers = [question.answers.find(answer => answer.id === answerId).id];
-    let scoreForQuestion = this.createScoreForQuestionOutput(question, correctAnswer.id === answerId, [correctAnswer.id], givenAnswers);
+    let scoreForQuestion = this.createResultForQuestionOutput(question, correctAnswer.id === answerId, [correctAnswer.id], givenAnswers);
     return scoreForQuestion;
   }
   
@@ -113,7 +113,7 @@ export class QuestionService {
         isCorrect = false;
       }
     }
-    return this.createScoreForQuestionOutput(question, isCorrect, correctAnswerIds, answerIds);
+    return this.createResultForQuestionOutput(question, isCorrect, correctAnswerIds, answerIds);
   }
   
   private async checkSortingAnswer(question:Question, answerIds: string[]){
@@ -125,45 +125,53 @@ export class QuestionService {
       }
     }
     let correctAnswerIds = Answers.map(answer => answer.id);
-    return this.createScoreForQuestionOutput(question, isCorrect, correctAnswerIds, answerIds);
+    return this.createResultForQuestionOutput(question, isCorrect, correctAnswerIds, answerIds);
   }
   
   private async checkPlainTextAnswer(question:Question, answer: string){
     let correctAnswer = question.answers[0].answer.toLowerCase().trim().replace(/ +/g, ' ').replace(/[.,-]/g, '');
     let trimmedAnswer = answer.toLowerCase().trim().replace(/ +/g, ' ').replace(/[.,-]/g, '');
-    let scoreForQuestion = new ScoreForQuestionOutput();
+    let scoreForQuestion = new ResultForQuestionOutput();
     scoreForQuestion.answered = true;
     scoreForQuestion.correct = correctAnswer === trimmedAnswer;
     scoreForQuestion.id = question.id;
     scoreForQuestion.question = question.question;
-    scoreForQuestion.correctAnswers = [new AnswerForScoreOutput(null, question.answers[0].answer)];
-    scoreForQuestion.givenAnswers = [new AnswerForScoreOutput(null, answer)];
+    scoreForQuestion.correctAnswers = [new AnswerForResultOutput(null, question.answers[0].answer)];
+    scoreForQuestion.givenAnswers = [new AnswerForResultOutput(null, answer)];
     return scoreForQuestion;
   }
   
-  private createScoreForQuestionOutput(question: Question, correct:boolean, correctAnswersIds: string[], givenAnswersIds: string[]){
-    let scoreForQuestion = new ScoreForQuestionOutput();
+  private async createResultForQuestionOutput(question: Question, correct:boolean, correctAnswersIds: string[], givenAnswersIds: string[]){
+    let scoreForQuestion = new ResultForQuestionOutput();
     scoreForQuestion.answered = true;
     scoreForQuestion.correct = correct;
     scoreForQuestion.id = question.id;
     scoreForQuestion.question = question.question;
-    let correctAnswers = [];
-    for (let correctAnswerId of correctAnswersIds){
-      let correctAnswer = question.answers.find(answer => answer.id === correctAnswerId);
-      if (question.sorting){correctAnswers.push(new AnswerForScoreOutput(correctAnswer.id, correctAnswer.answer + ' - ' + correctAnswer.number));}
-      else{correctAnswers.push(new AnswerForScoreOutput(correctAnswer.id, correctAnswer.answer));}
-    }
-    scoreForQuestion.correctAnswers = correctAnswers;
-    let givenAnswers = [];
-    for (let index:number = 0; index < givenAnswersIds.length; index++){
-      let givenAnswer = question.answers.find(answer => answer.id === givenAnswersIds[index]);
-      if (question.sorting){givenAnswers.push(new AnswerForScoreOutput(givenAnswer.id, givenAnswer.answer + ' - ' + (index+1)));}
-      else{givenAnswers.push(new AnswerForScoreOutput(givenAnswer.id, givenAnswer.answer));}
-    }
-    scoreForQuestion.givenAnswers = givenAnswers;
+    scoreForQuestion.correctAnswers = await createCorrectAnswers();
+    scoreForQuestion.givenAnswers = await createGivenAnswers();
     return scoreForQuestion;
+    
+    async function createCorrectAnswers() : Promise<AnswerForResultOutput[]>{
+      let correctAnswers: AnswerForResultOutput[] = [];
+      for (let correctAnswerId of correctAnswersIds){
+        let correctAnswer = question.answers.find(answer => answer.id === correctAnswerId);
+        if (question.sorting){correctAnswers.push(new AnswerForResultOutput(correctAnswer.id, correctAnswer.answer + ' - ' + correctAnswer.number));}
+        else {correctAnswers.push(new AnswerForResultOutput(correctAnswer.id, correctAnswer.answer));}
+      return correctAnswers;
+    }
+    }
+    
+    async function createGivenAnswers() : Promise<AnswerForResultOutput[]>{
+      let givenAnswers = [];
+      for (let index:number = 0; index < givenAnswersIds.length; index++){
+        let givenAnswer = question.answers.find(answer => answer.id === givenAnswersIds[index]);
+        if (question.sorting){givenAnswers.push(new AnswerForResultOutput(givenAnswer.id, givenAnswer.answer + ' - ' + (index+1)));}
+        else{givenAnswers.push(new AnswerForResultOutput(givenAnswer.id, givenAnswer.answer));}
+      }
+      return givenAnswers;
+    }
+    
   }
- 
   
   getCorrectAnswers (question: Question) : Answer[]{
     let correctAnswers: Answer[] = [];

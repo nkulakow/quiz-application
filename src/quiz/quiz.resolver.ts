@@ -4,7 +4,7 @@ import { Quiz } from './entities/quiz.entity';
 import { CreateQuizInput } from './dto/create-quiz.input';
 import { UpdateQuizInput } from './dto/update-quiz.input';
 import { GiveAnswerInput } from '@src/question/dto/give-answers.input';
-import { GetScoreOutput } from './dto/get-score.output';
+import { GetResultOutput } from './dto/get-result.output';
 
 @Resolver(() => Quiz)
 export class QuizResolver {
@@ -35,7 +35,7 @@ export class QuizResolver {
     return this.quizService.remove(id);
   }
   
-  @Query(()=>GetScoreOutput, {name: 'submitAnswers'})
+  @Query(()=>GetResultOutput, {name: 'submitAnswers'})
   submitAnswers(@Args('id') id: string, @Args('givenAnswers', {type: ()=> [GiveAnswerInput]}) givenAnswers: GiveAnswerInput[]) {
     return this.quizService.submitAnswers(id, givenAnswers);
   }

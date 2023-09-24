@@ -1,7 +1,7 @@
 import { Field, ObjectType } from '@nestjs/graphql';
 
 @ObjectType()
-export class AnswerForScoreOutput {
+export class AnswerForResultOutput {
   @Field({nullable: true})
   id: string;
   @Field()

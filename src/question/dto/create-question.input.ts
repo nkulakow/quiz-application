@@ -14,7 +14,7 @@ export class CreateQuestionInput {
   @Field({nullable: true})
   plainText: boolean;
   
-  @Field(()=>[CreateAnswerInput], {nullable: true})
+  @Field(()=>[CreateAnswerInput])
   answers: CreateAnswerInput[]
   
   @Field({nullable: true})

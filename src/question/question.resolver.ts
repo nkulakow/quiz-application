@@ -4,8 +4,7 @@ import { Question } from './entities/question.entity';
 import { CreateQuestionInput } from './dto/create-question.input';
 import { UpdateQuestionInput } from './dto/update-question.input';
 import { GiveAnswerInput } from './dto/give-answers.input';
-import { type } from 'os';
-import { ScoreForQuestionOutput } from './dto/score-for-question.output';
+import { ResultForQuestionOutput } from './dto/result-for-question.output';
 import { Answer } from '@src/answer/entities/answer.entity';
 
 @Resolver(() => Question)
@@ -40,17 +39,11 @@ export class QuestionResolver {
   
   @ResolveField(() => String, { nullable: true })
   type(@Parent() question: Question): string | null {
-    if (question.singleAnswer) {
-      return 'Single Answer';
-    } else if (question.multipleAnswer) {
-      return 'Multiple Answer';
-    } else if (question.sorting) {
-      return 'Sorting Question';
-    } else if (question.plainText) {
-      return 'Plain Text Answer';
-    } else {
-      return null;
-    }
+    if (question.singleAnswer) return 'Single Answer';
+    else if (question.multipleAnswer) return 'Multiple Answer';
+    else if (question.sorting) return 'Sorting Question';
+    else if (question.plainText) return 'Plain Text Answer';
+    else return null;
   }
   
   @ResolveField(() => [Answer], { nullable: true })
@@ -59,7 +52,7 @@ export class QuestionResolver {
     return question.answers;
   }
   
-  @Query(() => ScoreForQuestionOutput, { name: 'checkAnswer' })
+  @Query(() => ResultForQuestionOutput, { name: 'checkAnswer' })
   checkAnswer(@Args('givenAnswer') givenAnswer: GiveAnswerInput) {
     return this.questionService.checkAnswer(givenAnswer);
   }

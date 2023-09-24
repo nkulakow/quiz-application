@@ -24,7 +24,7 @@ export class Question {
   @Field({nullable: true})
   @Column({nullable: true})
   plainText: boolean;
-  @OneToMany(()=>Answer, answer=>answer.question, { onDelete: 'CASCADE' }) // if question is deleted, delete all answers
+  @OneToMany(()=>Answer, answer=>answer.question)
   @Field(()=>[Answer])
   answers: Answer[]
   
