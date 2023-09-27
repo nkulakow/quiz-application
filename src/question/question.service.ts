@@ -64,8 +64,9 @@ export class QuestionService {
     } catch (e) {
       throw e;
     }
+    updateQuestionInput.answers = undefined;
     let questionToUpdate = this.questionRepository.create(updateQuestionInput);
-    this.questionRepository.save(questionToUpdate);
+    await this.questionRepository.save(questionToUpdate);
     return this.findOne(updateQuestionInput.id);
   }
 
