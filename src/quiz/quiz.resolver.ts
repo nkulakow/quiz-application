@@ -34,9 +34,13 @@ export class QuizResolver {
   removeQuiz(@Args('id') id: string) {
     return this.quizService.remove(id);
   }
-  
-  @Query(()=>GetResultOutput, {name: 'submitAnswers'})
-  submitAnswers(@Args('id') id: string, @Args('givenAnswers', {type: ()=> [GiveAnswerInput]}) givenAnswers: GiveAnswerInput[]) {
+
+  @Query(() => GetResultOutput, { name: 'submitAnswers' })
+  submitAnswers(
+    @Args('id') id: string,
+    @Args('givenAnswers', { type: () => [GiveAnswerInput] })
+    givenAnswers: GiveAnswerInput[],
+  ) {
     return this.quizService.submitAnswers(id, givenAnswers);
   }
 }

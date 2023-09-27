@@ -5,7 +5,7 @@ import { CreateQuestionInput } from '@ent/question/dto/create-question.input';
 export class CreateQuizInput {
   @Field()
   name: string;
-  
-  @Field(()=>[CreateQuestionInput])
-  questions: CreateQuestionInput[]
+
+  @Field(() => [CreateQuestionInput])
+  questions: CreateQuestionInput[];
 }

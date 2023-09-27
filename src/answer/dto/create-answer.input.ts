@@ -4,11 +4,11 @@ import { InputType, Int, Field } from '@nestjs/graphql';
 export class CreateAnswerInput {
   @Field()
   answer: string;
-  @Field({nullable: true})
+  @Field({ nullable: true })
   correct: boolean;
-  @Field(()=>Int, {nullable: true})
+  @Field(() => Int, { nullable: true })
   number: number;
-  
-  @Field({nullable: true})
+
+  @Field({ nullable: true })
   questionId: string;
 }

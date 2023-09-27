@@ -4,6 +4,6 @@ import { InputType, Field } from '@nestjs/graphql';
 export class GiveAnswerInput {
   @Field()
   questionId: string;
-  @Field(()=>[String] )
+  @Field(() => [String])
   answers: string[];
 }

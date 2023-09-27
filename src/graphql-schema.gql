@@ -52,9 +52,7 @@ type GetResultOutput {
 }
 
 type Query {
-  getAllQuestions: [Question!]!
   getOneQuestion(id: String!): Question!
-  checkAnswer(givenAnswer: GiveAnswerInput!): ResultForQuestionOutput!
   getAllQuizzes: [Quiz!]!
   getOneQuiz(id: String!): Quiz!
   submitAnswers(id: String!, givenAnswers: [GiveAnswerInput!]!): GetResultOutput!
@@ -66,7 +64,7 @@ input GiveAnswerInput {
 }
 
 type Mutation {
-  createQuestion(createQuestionInput: CreateQuestionInput!): Question!
+  addQuestion(addQuestionInput: CreateQuestionInput!): Question!
   updateQuestion(updateQuestionInput: UpdateQuestionInput!): Question!
   removeQuestion(id: String!): Question!
   createQuiz(createQuizInput: CreateQuizInput!): Quiz!
@@ -99,6 +97,8 @@ input UpdateQuestionInput {
   sorting: Boolean
   plainText: Boolean
   answers: [UpdateAnswerInput!]
+  newAnswers: [CreateAnswerInput!]
+  deleteAnswers: [String!]
 }
 
 input UpdateAnswerInput {
