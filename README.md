@@ -1,73 +1,218 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Quiz App
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+_Nel Kułakowska_
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Program description
 
-## Description
+Quiz Backend API that allows:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- teachers to create and edit quizzes
+- students to view the quizzes and submit their answers to get their results (results are not saved)
 
-## Installation
+App uses PostgreSQL database run on Docker. API is based on GraphQL and was created using NestJS and TypeScript.
 
-```bash
-$ npm install
-```
+## How to run and use API
 
-## Running the app
+Run command `$ npm run start`.  
+Make sure you can connect to the database.
 
-```bash
-# development
-$ npm run start
+To see how all the queries and mutations work go to [GraphQl playground](localhost:3000/graphql "link").
 
-# watch mode
-$ npm run start:dev
+### GraphQL playground
 
-# production mode
-$ npm run start:prod
-```
+1. To create new quiz use createQuiz mutation, e.g.:
 
-## Test
+   ```GraphQL
+   mutation {
+     createQuiz(createQuizInput: {
+       name: "History Quiz"
+       questions: [
+         {
+           question: "Which countries were part of the Allied Powers during World War II?"
+           multipleAnswer: true
+           answers : [
+             { answer : "United States"
+             correct: true}
+             { answer : "Ireland"
+             correct: false}
+             { answer : "Soviet Union"
+             correct: true}
+             { answer : "France"
+             correct: true}
+             { answer : "Egypt"
+             correct: false}
+             { answer : "Austria"
+             correct: false}
+           ]
+           }
+         {
+           question: "What year did WW2 start?"
+             singleAnswer: true
+             answers : [
+             { answer : "1939"
+             correct: true}
+             { answer : "1959"
+             correct: false}
+             ]
+         }
+         {
+           question: "Arrange the following historical events in chronological order, from earliest to latest:"
+           sorting: true
+           answers : [
+             { answer : "American Revolution"
+             number: 3}
+             { answer : "French Revolution"
+             number: 4}
+             { answer : "Renaissance"
+             number: 2}
+             { answer : "Industrial Revolution"
+             number: 5}
+             { answer : "Ancient Egypt Civilization"
+             number: 1}
+           ]
+         }
+       ]
+     })
+     {
+       id
+     }
+   }
+   ```
 
-```bash
-# unit tests
-$ npm run test
+   You can get id of the created quiz and all of other information about it.
 
-# e2e tests
-$ npm run test:e2e
+2. To remove a quiz use removeQuiz mutation, e.g.:
 
-# test coverage
-$ npm run test:cov
-```
+   ```GraphQL
+   mutation {
+     removeQuiz (id: "b57822fd-f8ad-4611-b45b-68714b7228f6"){
+       id
+     }
+   }
+   ```
 
-## Support
+3. To change the name of the quiz use updateQuiz mutation, e.g.:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+   ```GraphQL
+   mutation {
+     updateQuiz (
+       updateQuizInput : {
+         id: "7465f8bd-7273-4763-8b3d-27dd2f3bcd45"
+         name: "Worlds History Quiz"
+       }
+     )
+     {
+       id
+       name
+     }
+   }
+   ```
 
-## Stay in touch
+4. To get all the quizzes in the database use getAllQuizzes query, e.g.:
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+   ```GraphQL
+   query {
+     getAllQuizzes {
+       id
+       name
+       questions {
+         id
+         question
+         type
+         answers {
+           id
+           answer
+           correct
+           number
+         }
+       }
+     }
+   }
+   ```
 
-## License
+5. To get one specific quiz use getOneQuiz query, e.g:
 
-Nest is [MIT licensed](LICENSE).
+   ```GraphQL
+   query {
+     getOneQuiz(id: "7465f8bd-7273-4763-8b3d-27dd2f3bcd45") {
+       id
+       name
+       questions {
+         id
+         question
+         type
+         possibleAnswers {
+           id
+           answer
+         }
+       }
+     }
+   }
+   ```
+
+6. To add question to the quiz use addQuestion mutation, e.g.:
+
+   ```GraphQL
+   mutation {
+     addQuestion (addQuestionInput : {
+       quizId: "7465f8bd-7273-4763-8b3d-27dd2f3bcd45"
+       question: "Who was the first President of the United States?"
+       plainText: true
+       answers : [
+         { answer : "George Washington"}
+       ]
+     }
+     )
+     {
+       id
+     }
+   }
+   ```
+
+7. To remove a question use removeQuestion mutation, e.g.:
+
+   ```GraphQL
+   mutation {
+     removeQuestion(id: "507f3733-602f-4518-9bfb-5a80acd8ed30")
+     {
+       id
+     }
+   }
+   ```
+
+8. To update question use updateQuestion mutation, e.g.:
+   ```GraphQL
+   mutation{
+     updateQuestion(updateQuestionInput: {
+       id: "d7f5e8f8-75b1-4581-a3c5-e9f500b3436c"
+       question: "Select the countries that were part of the Allied Powers during World War II:"
+       multipleAnswer: true
+       answers: [
+       {
+       id: "5716638e-d405-4802-a783-c4c9961cadca"
+       answer: "United States of America"
+       }
+       ]
+       newAnswers: [
+         {
+           answer: "Belgium"
+           correct: false
+         }
+       ]
+       deleteAnswers: [
+         "8be8a1e5-6c06-4bcd-bbf6-2a0efdaabf15",
+         "bcc6c31f-608d-4d54-bf6d-f3aa8afc689f"
+
+       ]
+     }
+     ){
+       id
+       question
+       answers {
+         id
+         answer
+         correct
+       }
+     }
+   }
+   ```
