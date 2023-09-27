@@ -11,6 +11,12 @@ type Answer {
   questionId: String!
 }
 
+type Quiz {
+  id: String!
+  name: String!
+  questions: [Question!]
+}
+
 type Question {
   id: String!
   question: String!
@@ -20,22 +26,50 @@ type Question {
   plainText: Boolean
   answers: [Answer!]!
   type: String
+  quiz: Quiz!
+  quizId: String!
+  possibleAnswers: [Answer!]
+}
+
+type AnswerForResultOutput {
+  id: String
+  answer: String!
+}
+
+type ResultForQuestionOutput {
+  id: String!
+  question: String!
+  answered: Boolean!
+  correct: Boolean!
+  givenAnswers: [AnswerForResultOutput!]
+  correctAnswers: [AnswerForResultOutput!]!
+}
+
+type GetResultOutput {
+  quizId: String!
+  score: Float!
+  questions: [ResultForQuestionOutput!]!
 }
 
 type Query {
-  getAllQuestions: [Question!]!
   getOneQuestion(id: String!): Question!
-  checkAnswer(questionId: String!, answerIds: [String!]!): Boolean!
-  answer(id: String!): Answer!
+  getAllQuizzes: [Quiz!]!
+  getOneQuiz(id: String!): Quiz!
+  submitAnswers(id: String!, givenAnswers: [GiveAnswerInput!]!): GetResultOutput!
+}
+
+input GiveAnswerInput {
+  questionId: String!
+  answers: [String!]!
 }
 
 type Mutation {
-  createQuestion(createQuestionInput: CreateQuestionInput!, answersInput: [CreateAnswerInput!]!): Question!
-  updateQuestion(updateQuestionInput: UpdateQuestionInput!, updateAnswersInput: [UpdateAnswerInput!]!): Question!
+  addQuestion(addQuestionInput: CreateQuestionInput!): Question!
+  updateQuestion(updateQuestionInput: UpdateQuestionInput!): Question!
   removeQuestion(id: String!): Question!
-  createAnswer(createAnswerInput: CreateAnswerInput!): Answer!
-  updateAnswer(updateAnswerInput: UpdateAnswerInput!): Answer!
-  removeAnswer(id: String!): Answer!
+  createQuiz(createQuizInput: CreateQuizInput!): Quiz!
+  updateQuiz(updateQuizInput: UpdateQuizInput!): Quiz!
+  removeQuiz(id: String!): Quiz!
 }
 
 input CreateQuestionInput {
@@ -44,6 +78,8 @@ input CreateQuestionInput {
   multipleAnswer: Boolean
   sorting: Boolean
   plainText: Boolean
+  answers: [CreateAnswerInput!]!
+  quizId: String
 }
 
 input CreateAnswerInput {
@@ -60,12 +96,25 @@ input UpdateQuestionInput {
   multipleAnswer: Boolean
   sorting: Boolean
   plainText: Boolean
+  answers: [UpdateAnswerInput!]
+  newAnswers: [CreateAnswerInput!]
+  deleteAnswers: [String!]
 }
 
 input UpdateAnswerInput {
+  id: String!
   answer: String!
   correct: Boolean
   number: Int
   questionId: String
+}
+
+input CreateQuizInput {
+  name: String!
+  questions: [CreateQuestionInput!]!
+}
+
+input UpdateQuizInput {
   id: String!
+  name: String!
 }
