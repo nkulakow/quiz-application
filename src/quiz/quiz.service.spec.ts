@@ -1,14 +1,14 @@
-import { Answer } from '../../src/answer/entities/answer.entity';
-import { Question } from '../../src/question/entities/question.entity';
-import { Quiz } from '../../src/quiz/entities/quiz.entity';
-import { QuizService } from '../../src/quiz/quiz.service';
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { CreateQuizInput } from './dto/create-quiz.input';
-import { CreateQuestionInput } from '@src/question/dto/create-question.input';
-import { CreateAnswerInput } from '@src/answer/dto/create-answer.input';
-import { UpdateQuizInput } from './dto/update-quiz.input';
-import { GiveAnswerInput } from '@src/question/dto/give-answers.input';
+import { Answer } from "../../src/answer/entities/answer.entity";
+import { Question } from "../../src/question/entities/question.entity";
+import { Quiz } from "../../src/quiz/entities/quiz.entity";
+import { QuizService } from "../../src/quiz/quiz.service";
+import { Test, TestingModule } from "@nestjs/testing";
+import { getRepositoryToken } from "@nestjs/typeorm";
+import { CreateQuizInput } from "./dto/create-quiz.input";
+import { CreateQuestionInput } from "@src/question/dto/create-question.input";
+import { CreateAnswerInput } from "@src/answer/dto/create-answer.input";
+import { UpdateQuizInput } from "./dto/update-quiz.input";
+import { GiveAnswerInput } from "@src/question/dto/give-answers.input";
 
 interface EntityWithId {
   id: string;
@@ -32,7 +32,7 @@ const questionRepositoryMock = new MockRepository<Question>();
 const answerRepositoryMock = new MockRepository<Answer>();
 const quizRepositoryMock = new MockRepository<Quiz>();
 
-describe('QuizService', () => {
+describe("QuizService", () => {
   let service: QuizService;
 
   beforeEach(async () => {
@@ -57,10 +57,8 @@ describe('QuizService', () => {
     service = module.get<QuizService>(QuizService);
   });
 
-  it('should create a quiz without questions', async () => {
-    const createQuizInput = new CreateQuizInput();
-    createQuizInput.name = 'Test Quiz';
-    createQuizInput.questions = [];
+  it("should create a quiz without questions", async () => {
+    const createQuizInput = new CreateQuizInput("Test Quiz", []);
     quizRepositoryMock.create = jest.fn().mockReturnValue(createQuizInput);
     quizRepositoryMock.save = jest.fn().mockReturnValue(createQuizInput);
 
@@ -71,23 +69,27 @@ describe('QuizService', () => {
     expect(createdQuiz.questions).toEqual([]);
   });
 
-  it('should create a quiz with a question', async () => {
+  it("should create a quiz with a question", async () => {
     quizRepositoryMock.entities = [];
     questionRepositoryMock.entities = [];
     answerRepositoryMock.entities = [];
 
-    const createQuizInput = new CreateQuizInput();
-    createQuizInput.name = 'Test Quiz';
-    const createQuestionInput = new CreateQuestionInput();
-    createQuestionInput.question = 'What is the capital of France?';
-    createQuestionInput.singleAnswer = true;
-    const answersInput = [new CreateAnswerInput(), new CreateAnswerInput()];
-    answersInput[0].answer = 'Paris';
-    answersInput[0].correct = true;
-    answersInput[1].answer = 'London';
-    answersInput[1].correct = false;
-    createQuestionInput.answers = answersInput;
-    createQuizInput.questions = [createQuestionInput];
+    const answersInput = [
+      new CreateAnswerInput("Paris", true, null),
+      new CreateAnswerInput("London", false, null),
+    ];
+    const createQuestionInput = new CreateQuestionInput(
+      "What is the capital of France?",
+      true,
+      null,
+      null,
+      null,
+      answersInput,
+      "custom-quiz-id"
+    );
+    const createQuizInput = new CreateQuizInput("Test Quiz", [
+      createQuestionInput,
+    ]);
 
     quizRepositoryMock.create = jest.fn().mockReturnValue(createQuizInput);
     quizRepositoryMock.save = jest.fn().mockReturnValue(createQuizInput);
@@ -95,14 +97,14 @@ describe('QuizService', () => {
       .fn()
       .mockImplementation((question) => ({
         ...question,
-        id: 'generated-question-id',
+        id: "generated-question-id",
       }));
     questionRepositoryMock.save = jest
       .fn()
       .mockImplementation((question) => question);
     answerRepositoryMock.create = jest.fn().mockImplementation((answer) => ({
       ...answer,
-      id: 'generated-answer-id',
+      id: "generated-answer-id",
     }));
     answerRepositoryMock.save = jest
       .fn()
@@ -110,38 +112,37 @@ describe('QuizService', () => {
 
     const createdQuiz = await service.create(createQuizInput);
     expect(createdQuiz).toEqual(createQuizInput);
-    expect(createdQuiz.questions[0].id).toEqual('generated-question-id');
+    expect(createdQuiz.questions[0].id).toEqual("generated-question-id");
     expect(createdQuiz.questions[0].question).toEqual(
-      'What is the capital of France?',
+      "What is the capital of France?"
     );
     expect(createdQuiz.questions[0].answers[0].id).toEqual(
-      'generated-answer-id',
+      "generated-answer-id"
     );
-    expect(createdQuiz.questions[0].answers[0].answer).toEqual('Paris');
+    expect(createdQuiz.questions[0].answers[0].answer).toEqual("Paris");
     expect(createdQuiz.questions[0].answers[0].correct).toEqual(true);
   });
 
-  it('should update a quiz', async () => {
+  it("should update a quiz", async () => {
     quizRepositoryMock.entities = [];
     questionRepositoryMock.entities = [];
     answerRepositoryMock.entities = [];
 
-    const createQuizInput = new CreateQuizInput();
-    createQuizInput.name = 'Test Quiz';
-    createQuizInput.questions = [];
+    const createQuizInput = new CreateQuizInput("Test Quiz", []);
 
-    const updateQuizInput = new UpdateQuizInput();
-    updateQuizInput.id = 'custom-quiz-id';
-    updateQuizInput.name = 'Test Quiz Updated';
+    const updateQuizInput = new UpdateQuizInput(
+      "custom-quiz-id",
+      "Test Quiz Updated"
+    );
 
     quizRepositoryMock.create = jest.fn().mockImplementation((entity) => {
-      entity.id = 'custom-quiz-id';
+      entity.id = "custom-quiz-id";
       return entity;
     });
 
     quizRepositoryMock.save = jest.fn().mockImplementation((entity) => {
       const index = quizRepositoryMock.entities.findIndex(
-        (e) => e.id === entity.id,
+        (e) => e.id === entity.id
       );
       if (index !== -1) {
         if (entity.name) quizRepositoryMock.entities[index].name = entity.name;
@@ -154,7 +155,7 @@ describe('QuizService', () => {
     quizRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
       const id = query.where.id;
       const foundEntity = quizRepositoryMock.entities.find(
-        (entity) => entity.id === id,
+        (entity) => entity.id === id
       );
       return foundEntity || undefined;
     });
@@ -164,40 +165,51 @@ describe('QuizService', () => {
     expect(updatedQuiz.name).toEqual(updateQuizInput.name);
   });
 
-  it('should submit answers and give score', async () => {
+  it("should submit answers and give score", async () => {
     quizRepositoryMock.entities = [];
     questionRepositoryMock.entities = [];
     answerRepositoryMock.entities = [];
 
-    const createQuizInput = new CreateQuizInput();
-    createQuizInput.name = 'Test Quiz';
-    const createQuestionInput = new CreateQuestionInput();
-    createQuestionInput.question = 'What is the capital of France?';
-    createQuestionInput.singleAnswer = true;
-    const answersInput = [new CreateAnswerInput(), new CreateAnswerInput()];
-    answersInput[0].answer = 'Paris';
-    answersInput[0].correct = true;
-    answersInput[1].answer = 'London';
-    answersInput[1].correct = false;
-    createQuestionInput.answers = answersInput;
+    const answersInput = [
+      new CreateAnswerInput("Paris", true, null),
+      new CreateAnswerInput("London", false, null),
+    ];
+    const createQuestionInput = new CreateQuestionInput(
+      "What is the capital of France?",
+      true,
+      null,
+      null,
+      null,
+      answersInput,
+      "custom-quiz-id"
+    );
 
-    const createQuestionInput2 = new CreateQuestionInput();
-    createQuestionInput.question = 'What is the capital of UK?';
-    createQuestionInput.singleAnswer = true;
-    const answersInput2 = [new CreateAnswerInput(), new CreateAnswerInput()];
-    answersInput2[0].answer = 'Paris';
-    answersInput2[0].correct = false;
-    answersInput2[1].answer = 'London';
-    answersInput2[1].correct = true;
-    createQuestionInput2.answers = answersInput2;
-    createQuizInput.questions = [createQuestionInput, createQuestionInput2];
+    const answersInput2 = [
+      new CreateAnswerInput("Paris", false, null),
+      new CreateAnswerInput("London", true, null),
+    ];
+    const createQuestionInput2 = new CreateQuestionInput(
+      "What is the capital of UK?",
+      true,
+      null,
+      null,
+      null,
+      answersInput2,
+      "custom-quiz-id"
+    );
+    const createQuizInput = new CreateQuizInput("Test Quiz", [
+      createQuestionInput,
+      createQuestionInput2,
+    ]);
 
-    const givenAnswersInput = [new GiveAnswerInput()];
-    givenAnswersInput[0].questionId = 'generated-question-id-0';
-    givenAnswersInput[0].answers = ['generated-answer-id-Paris'];
+    const givenAnswersInput = [
+      new GiveAnswerInput("generated-question-id-0", [
+        "generated-answer-id-Paris",
+      ]),
+    ];
 
     quizRepositoryMock.create = jest.fn().mockImplementation((entity) => {
-      entity.id = 'custom-quiz-id';
+      entity.id = "custom-quiz-id";
       return entity;
     });
     quizRepositoryMock.save = jest.fn().mockImplementation((entity) => {
@@ -207,7 +219,7 @@ describe('QuizService', () => {
     quizRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
       const id = query.where.id;
       const foundEntity = quizRepositoryMock.entities.find(
-        (entity) => entity.id === id,
+        (entity) => entity.id === id
       );
       return foundEntity || undefined;
     });
@@ -215,7 +227,7 @@ describe('QuizService', () => {
       .fn()
       .mockImplementation((question) => ({
         ...question,
-        id: 'generated-question-id-' + questionRepositoryMock.entities.length,
+        id: "generated-question-id-" + questionRepositoryMock.entities.length,
       }));
     questionRepositoryMock.save = jest.fn().mockImplementation((entity) => {
       questionRepositoryMock.entities.push(entity);
@@ -224,13 +236,13 @@ describe('QuizService', () => {
     questionRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
       const id = query.where.id;
       const foundEntity = questionRepositoryMock.entities.find(
-        (entity) => entity.id === id,
+        (entity) => entity.id === id
       );
       return foundEntity || undefined;
     });
     answerRepositoryMock.create = jest.fn().mockImplementation((answer) => ({
       ...answer,
-      id: 'generated-answer-id-' + answer.answer,
+      id: "generated-answer-id-" + answer.answer,
     }));
     answerRepositoryMock.save = jest.fn().mockImplementation((entity) => {
       answerRepositoryMock.entities.push(entity);
@@ -239,15 +251,15 @@ describe('QuizService', () => {
     answerRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
       const id = query.where.id;
       const foundEntity = answerRepositoryMock.entities.find(
-        (entity) => entity.id === id,
+        (entity) => entity.id === id
       );
       return foundEntity || undefined;
     });
 
     await service.create(createQuizInput);
     let score = await service.submitAnswers(
-      'custom-quiz-id',
-      givenAnswersInput,
+      "custom-quiz-id",
+      givenAnswersInput
     );
     expect(score.score).toEqual(50);
     expect(score.questions[0].correct).toEqual(true);
