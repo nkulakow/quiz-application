@@ -11,6 +11,7 @@ import { CreateAnswerInput } from "../../src/answer/dto/create-answer.input";
 import { UpdateQuestionInput } from "../../src/question/dto/update-question.input";
 import { UpdateAnswerInput } from "../../src/answer/dto/update-answer.input";
 import { GiveAnswerInput } from "./dto/give-answers.input";
+import { AnswerService } from "@src/answer/answer.service";
 
 interface EntityWithId {
   id: string;
@@ -40,6 +41,7 @@ describe("QuestionService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         QuestionService,
+        AnswerService,
         {
           provide: getRepositoryToken(Question),
           useValue: questionRepositoryMock,
@@ -68,12 +70,23 @@ describe("QuestionService", () => {
       answersInput
     );
 
-    questionRepositoryMock.create = jest
-      .fn()
-      .mockReturnValue(createQuestionInput);
-    questionRepositoryMock.save = jest
-      .fn()
-      .mockReturnValue(createQuestionInput);
+    questionRepositoryMock.create = jest.fn().mockImplementation((entity) => {
+      entity.id = "custom-question-id";
+      return entity;
+    });
+
+    questionRepositoryMock.save = jest.fn().mockImplementation((entity) => {
+      questionRepositoryMock.entities.push(entity);
+      return entity;
+    });
+
+    questionRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
+      const id = query.where.id;
+      const foundEntity = questionRepositoryMock.entities.find(
+        (entity) => entity.id === id
+      );
+      return foundEntity || undefined;
+    });
     answerRepositoryMock.create = jest.fn().mockImplementation((answer) => ({
       ...answer,
       id: "generated-answer-id",

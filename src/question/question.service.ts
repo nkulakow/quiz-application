@@ -17,22 +17,111 @@ export class QuestionService {
   constructor(
     @InjectRepository(Question)
     private questionRepository: Repository<Question>,
-    @InjectRepository(Answer) private answerRepository: Repository<Answer>
+    @InjectRepository(Answer) private answerRepository: Repository<Answer>,
+    private AnswerService: AnswerService
   ) {}
 
   async create(createQuestionInput: CreateQuestionInput) {
+    this.checkFieldsCorrespondsToQuestionType(createQuestionInput);
     let questionToCreate = this.questionRepository.create(createQuestionInput);
+    let answersInput = createQuestionInput.answers;
+    try {
+      this.checkUniqnessOfTheAnswers(
+        answersInput,
+        [],
+        questionToCreate.question
+      );
+    } catch (e) {
+      e.message = `Error while creating answers: ${e.message}`;
+      throw e;
+    }
     let createdQuestion = await this.questionRepository.save(questionToCreate);
     let questionId = createdQuestion.id;
-    let answersInput = createQuestionInput.answers;
     createdQuestion.answers = [];
-    const AnswerServiceInstance = new AnswerService(this.answerRepository);
+    await this.createAnswers(answersInput, questionId);
+    return createdQuestion;
+  }
+
+  private async createAnswers(
+    answersInput: CreateAnswerInput[],
+    questionId: string
+  ) {
+    if (!answersInput) return;
+    let question = await this.findOne(questionId);
     for (let answerInput of answersInput) {
       answerInput.questionId = questionId;
-      let answer = await AnswerServiceInstance.create(answerInput);
-      createdQuestion.answers.push(answer);
+      question.answers.push(await this.AnswerService.create(answerInput));
     }
-    return createdQuestion;
+  }
+
+  private checkUniqnessOfTheAnswers(
+    answersInput: CreateAnswerInput[],
+    savedAnswers: Answer[],
+    question: string
+  ) {
+    const checkedAnswers = new Set();
+    for (let answerInput of answersInput) {
+      if (savedAnswers.find((answer) => answer.answer === answerInput.answer)) {
+        throw new DuplicateAnswerForQuestionException(
+          `Answer ${answerInput.answer} already exists for question ${question}`
+        );
+      }
+      if (checkedAnswers.has(answerInput.answer)) {
+        throw new DuplicateAnswerForQuestionException(
+          `Gave ${answerInput.answer} 2 times for question ${question}`
+        );
+      }
+      checkedAnswers.add(answerInput.answer);
+    }
+  }
+
+  private checkFieldsCorrespondsToQuestionType(
+    createQuestionInput: CreateQuestionInput
+  ) {
+    const typesBoleean = [
+      createQuestionInput.singleAnswer,
+      createQuestionInput.multipleAnswer,
+      createQuestionInput.sorting,
+      createQuestionInput.plainText,
+    ];
+    if (typesBoleean.filter(Boolean).length !== 1) {
+      throw new Error(
+        `Only one type of question can be true for question: ${createQuestionInput.question}`
+      );
+    }
+    for (let answer of createQuestionInput.answers) {
+      if (createQuestionInput.sorting && !answer.number) {
+        throw new Error(
+          `Field number is required for answer: ${answer.answer} for sorting question: ${createQuestionInput.question}`
+        );
+      }
+      if (
+        (createQuestionInput.singleAnswer ||
+          createQuestionInput.multipleAnswer) &&
+        answer.correct == null
+      ) {
+        throw new Error(
+          `Field correct is required for answer: ${answer.answer} for single/multiple answers question: ${createQuestionInput.question}`
+        );
+      }
+    }
+    if (
+      createQuestionInput.plainText &&
+      createQuestionInput.answers.length !== 1
+    ) {
+      throw new Error(
+        `Only one answer is allowed for plain text question: ${createQuestionInput.question}`
+      );
+    }
+    if (
+      createQuestionInput.singleAnswer &&
+      createQuestionInput.answers.filter((answer) => answer.correct).length !==
+        1
+    ) {
+      throw new Error(
+        `Only one correct answer is allowed for single answer question: ${createQuestionInput.question}`
+      );
+    }
   }
 
   findOne(id: string): Promise<Question> {
@@ -43,7 +132,8 @@ export class QuestionService {
   }
 
   async update(updateQuestionInput: UpdateQuestionInput) {
-    if (!this.findOne(updateQuestionInput.id)) {
+    const question = await this.findOne(updateQuestionInput.id);
+    if (!question) {
       throw new NotFoundException(
         `Question with id ${updateQuestionInput.id} not found`
       );
@@ -57,11 +147,19 @@ export class QuestionService {
         updateQuestionInput.deleteAnswers,
         updateQuestionInput.id
       );
-      await this.createAnswers(
-        updateQuestionInput.newAnswers,
-        updateQuestionInput.id
-      );
+      if (this.createAnswers) {
+        this.checkUniqnessOfTheAnswers(
+          updateQuestionInput.newAnswers,
+          question.answers,
+          question.question
+        );
+        await this.createAnswers(
+          updateQuestionInput.newAnswers,
+          updateQuestionInput.id
+        );
+      }
     } catch (e) {
+      e.message = `Error while updating answers: ${e.message}`;
       throw e;
     }
     updateQuestionInput.answers = undefined;
@@ -75,9 +173,8 @@ export class QuestionService {
     questionId: string
   ) {
     if (!updateAnswersInput) return;
-    const AnswerServiceInstance = new AnswerService(this.answerRepository);
     for (let answerInput of updateAnswersInput) {
-      let updatedAnswer = await AnswerServiceInstance.findOne(answerInput.id);
+      let updatedAnswer = await this.AnswerService.findOne(answerInput.id);
       if (updatedAnswer.questionId !== questionId) {
         throw new AnswerDoesNotBelongToQuestionException(
           `Answer with ID ${answerInput.id} does not belong to question with ID ${questionId}`
@@ -85,7 +182,7 @@ export class QuestionService {
       }
     }
     for (let answerInput of updateAnswersInput) {
-      await AnswerServiceInstance.update(answerInput);
+      await this.AnswerService.update(answerInput);
     }
   }
 
@@ -106,19 +203,6 @@ export class QuestionService {
       await this.answerRepository.remove([
         question.answers.find((answer) => answer.id === answerId),
       ]);
-    }
-  }
-
-  private async createAnswers(
-    createAnswersInput: CreateAnswerInput[],
-    questionId: string
-  ) {
-    if (!createAnswersInput) return;
-    const AnswerServiceInstance = new AnswerService(this.answerRepository);
-    let question = await this.findOne(questionId);
-    for (let answerInput of createAnswersInput) {
-      answerInput.questionId = questionId;
-      question.answers.push(await AnswerServiceInstance.create(answerInput));
     }
   }
 
@@ -165,20 +249,32 @@ export class QuestionService {
   }
 
   private checkMultipleAnswer(question: Question, answerIds: string[]) {
-    let correctAnswers = question.answers.filter((answer) => answer.correct);
-    let correctAnswerIds = correctAnswers.map((answer) => answer.id);
-    let isCorrect = true;
+    const correctAnswers = question.answers.filter((answer) => answer.correct);
+    const correctAnswerIds = correctAnswers.map((answer) => answer.id);
+
     if (correctAnswerIds.length !== answerIds.length) {
-      isCorrect = false;
+      return this.createResultForQuestionOutput(
+        question,
+        false,
+        correctAnswerIds,
+        answerIds
+      );
     }
-    for (let answerId of answerIds) {
+
+    for (const answerId of answerIds) {
       if (!correctAnswerIds.includes(answerId)) {
-        isCorrect = false;
+        return this.createResultForQuestionOutput(
+          question,
+          false,
+          correctAnswerIds,
+          answerIds
+        );
       }
     }
+
     return this.createResultForQuestionOutput(
       question,
-      isCorrect,
+      true,
       correctAnswerIds,
       answerIds
     );
@@ -309,5 +405,12 @@ export class AnswerDoesNotBelongToQuestionException extends Error {
   constructor(message: string) {
     super(message);
     this.name = "AnswerDoesNotBelongToQuestionException";
+  }
+}
+
+export class DuplicateAnswerForQuestionException extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DuplicateAnswerForQuestionException";
   }
 }
