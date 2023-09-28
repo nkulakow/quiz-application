@@ -8,12 +8,16 @@ import { ApolloDriver } from "@nestjs/apollo";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AnswerModule } from "./answer/answer.module";
 import { QuizModule } from "./quiz/quiz.module";
-import { MyConfigModule } from "../config/config.module";
-import { AppConfigService } from "../config/config.service";
+import { ConfigModule, ConfigService } from "@nestjs/config";
+import dbConfig from "src/config/db.config";
 
 @Module({
   imports: [
-    MyConfigModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [dbConfig],
+      envFilePath: [`.env`],
+    }),
     QuestionModule,
     AnswerModule,
     QuizModule,
@@ -22,22 +26,14 @@ import { AppConfigService } from "../config/config.service";
       autoSchemaFile: join(process.cwd(), "src/graphql-schema.gql"),
     }),
     TypeOrmModule.forRootAsync({
-      imports: [MyConfigModule], // Import the config module
-      useFactory: (configService: AppConfigService) => ({
-        type: "postgres",
-        host: configService.host,
-        port: configService.port,
-        username: configService.username,
-        password: configService.password,
-        database: configService.database,
-        entities: [configService.entities], // Note that entities should be an array
-        synchronize: configService.synchronize,
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        ...(await configService.get("database")),
       }),
-      inject: [AppConfigService], // Inject the AppConfigService
+      inject: [ConfigService],
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, AppConfigService],
-  exports: [AppConfigService],
+  providers: [AppService],
 })
 export class AppModule {}
