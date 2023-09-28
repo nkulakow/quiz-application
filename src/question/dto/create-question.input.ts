@@ -1,8 +1,26 @@
-import { InputType, Field } from '@nestjs/graphql';
-import { CreateAnswerInput } from '@ent/answer/dto/create-answer.input';
+import { InputType, Field } from "@nestjs/graphql";
+import { CreateAnswerInput } from "@ent/answer/dto/create-answer.input";
 
 @InputType()
 export class CreateQuestionInput {
+  constructor(
+    question: string,
+    singleAnswer: boolean,
+    multipleAnswer: boolean,
+    sorting: boolean,
+    plainText: boolean,
+    answers: CreateAnswerInput[],
+    quizId?: string
+  ) {
+    this.question = question;
+    this.singleAnswer = singleAnswer;
+    this.multipleAnswer = multipleAnswer;
+    this.sorting = sorting;
+    this.plainText = plainText;
+    this.answers = answers;
+    this.quizId = quizId;
+  }
+
   @Field()
   question: string;
   @Field({ nullable: true })

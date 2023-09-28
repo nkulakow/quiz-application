@@ -212,15 +212,14 @@ export class QuestionService {
       .trim()
       .replace(/ +/g, " ")
       .replace(/[.,-]/g, "");
-    let scoreForQuestion = new ResultForQuestionOutput();
-    scoreForQuestion.answered = true;
-    scoreForQuestion.correct = correctAnswer === trimmedAnswer;
-    scoreForQuestion.id = question.id;
-    scoreForQuestion.question = question.question;
-    scoreForQuestion.correctAnswers = [
-      new AnswerForResultOutput(null, question.answers[0].answer),
-    ];
-    scoreForQuestion.givenAnswers = [new AnswerForResultOutput(null, answer)];
+    let scoreForQuestion = new ResultForQuestionOutput(
+      question.id,
+      question.question,
+      true,
+      correctAnswer === trimmedAnswer,
+      [new AnswerForResultOutput(null, answer)],
+      [new AnswerForResultOutput(null, question.answers[0].answer)]
+    );
     return scoreForQuestion;
   }
 
@@ -230,11 +229,14 @@ export class QuestionService {
     correctAnswersIds: string[],
     givenAnswersIds: string[]
   ) {
-    let scoreForQuestion = new ResultForQuestionOutput();
-    scoreForQuestion.answered = true;
-    scoreForQuestion.correct = correct;
-    scoreForQuestion.id = question.id;
-    scoreForQuestion.question = question.question;
+    let scoreForQuestion = new ResultForQuestionOutput(
+      question.id,
+      question.question,
+      true,
+      correct,
+      [],
+      []
+    );
     scoreForQuestion.correctAnswers = await createCorrectAnswers();
     scoreForQuestion.givenAnswers = await createGivenAnswers();
     return scoreForQuestion;
