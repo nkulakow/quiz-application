@@ -1,10 +1,7 @@
 import { Answer } from "../../src/answer/entities/answer.entity";
 import { Question } from "../../src/question/entities/question.entity";
 import { Test, TestingModule } from "@nestjs/testing";
-import {
-  AnswerDoesNotBelongToQuestionException,
-  QuestionService,
-} from "../../src/question/question.service";
+import { QuestionService } from "../../src/question/question.service";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { CreateQuestionInput } from "../../src/question/dto/create-question.input";
 import { CreateAnswerInput } from "../../src/answer/dto/create-answer.input";
@@ -12,6 +9,7 @@ import { UpdateQuestionInput } from "../../src/question/dto/update-question.inpu
 import { UpdateAnswerInput } from "../../src/answer/dto/update-answer.input";
 import { GiveAnswerInput } from "./dto/give-answers.input";
 import { AnswerService } from "@src/answer/answer.service";
+import { AnswerDoesNotBelongToQuestionException } from "@src/excpetions/answer-does-not-belong-to-question-exception";
 
 interface EntityWithId {
   id: string;

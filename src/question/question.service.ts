@@ -11,6 +11,9 @@ import { GiveAnswerInput } from "./dto/give-answers.input";
 import { ResultForQuestionOutput } from "./dto/result-for-question.output";
 import { AnswerForResultOutput } from "@src/answer/dto/answer-for-result.output";
 import { CreateAnswerInput } from "@src/answer/dto/create-answer.input";
+import { LengthEqualsZeroException } from "@src/excpetions/length-equals-zero-exception";
+import { DuplicateAnswerForQuestionException } from "@src/excpetions/duplicate-answer-for-question-exception";
+import { AnswerDoesNotBelongToQuestionException } from "@src/excpetions/answer-does-not-belong-to-question-exception";
 
 @Injectable()
 export class QuestionService {
@@ -22,6 +25,9 @@ export class QuestionService {
   ) {}
 
   async create(createQuestionInput: CreateQuestionInput) {
+    if (createQuestionInput.question.length < 1) {
+      throw new LengthEqualsZeroException(`Question cannot be empty`);
+    }
     this.checkFieldsCorrespondsToQuestionType(createQuestionInput);
     let questionToCreate = this.questionRepository.create(createQuestionInput);
     let answersInput = createQuestionInput.answers;
@@ -59,6 +65,7 @@ export class QuestionService {
     savedAnswers: Answer[],
     question: string
   ) {
+    if (!answersInput) return;
     const checkedAnswers = new Set();
     for (let answerInput of answersInput) {
       if (savedAnswers.find((answer) => answer.answer === answerInput.answer)) {
@@ -398,19 +405,5 @@ export class QuestionService {
     }
     correctAnswers = question.answers.filter((answer) => answer.correct);
     return correctAnswers;
-  }
-}
-
-export class AnswerDoesNotBelongToQuestionException extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "AnswerDoesNotBelongToQuestionException";
-  }
-}
-
-export class DuplicateAnswerForQuestionException extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "DuplicateAnswerForQuestionException";
   }
 }

@@ -10,6 +10,7 @@ import { GiveAnswerInput } from "@src/question/dto/give-answers.input";
 import { GetResultOutput } from "./dto/get-result.output";
 import { ResultForQuestionOutput } from "@src/question/dto/result-for-question.output";
 import { AnswerForResultOutput } from "@src/answer/dto/answer-for-result.output";
+import { LengthEqualsZeroException } from "@src/excpetions/length-equals-zero-exception";
 
 @Injectable()
 export class QuizService {
@@ -19,6 +20,9 @@ export class QuizService {
   ) {}
 
   async create(createQuizInput: CreateQuizInput) {
+    if (createQuizInput.name.length < 1) {
+      throw new LengthEqualsZeroException(`Quiz name cannot be empty`);
+    }
     let quizToCreate = this.quizRepository.create(createQuizInput);
     let createdQuiz = await this.quizRepository.save(quizToCreate);
     let quizId = createdQuiz.id;
