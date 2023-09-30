@@ -78,8 +78,7 @@ To see how all the queries and mutations work go to [GraphQl playground](localho
      }
    }
    ```
-
-   You can get id of the created quiz and all of other information about it.
+   You can get ids (and all of given information) in return.
 
 2. To remove a quiz use removeQuiz mutation, e.g.:
 
@@ -216,3 +215,104 @@ To see how all the queries and mutations work go to [GraphQl playground](localho
      }
    }
    ```
+   You can change the type and name of question (remember that after changing the type then answers must correspond to it).    
+   While updating you can also: update answers using answers field; add new answers using newAnswers field; delete saved earlier answers using deleteAnswers field.    
+
+9. To get one specific question you can use getOneQuestion query, e.g:
+      ```GraphQL
+      query {
+        getOneQuestion (id: "1a925f34-1f72-43f7-86c8-df8e0e6d656a"){
+          id
+          question
+          possibleAnswers {
+            id
+            answer
+          }
+        }
+      }   
+      ```
+
+    
+10. To submit answers use submitAnswers query, e.g:
+      ```GraphQL
+      query {
+        submitAnswers(
+          id: "4faded2e-0ade-4e8d-b98d-21ddad355f4c"
+          givenAnswers: [
+            {
+              questionId: "1a925f34-1f72-43f7-86c8-df8e0e6d656a"
+              answers: [
+               "535a7ee0-65eb-4f0c-8c73-71a68158f739",
+               "0cf72a8d-7ec3-4dec-bce9-5ce78e49dd33",
+               "0d062b7d-b6e5-43dd-9633-0b588dca4b0c"
+            ]
+            }
+            {
+              questionId: "89d250f9-e53e-4017-a4aa-90f426508467"
+              answers: ["George Washington"]
+            }
+            {
+              questionId: "12995a17-4d5f-4c5f-80ce-1398db7c0472"
+              answers: [
+                "3fbcf064-7bf5-40ee-af49-42a6c979a89c",
+                "5f90891b-a7bd-42e0-9a65-3e194ad9286c",
+                "0d4506f8-8ce6-4610-b304-56f6ef9aa2d5",
+                "bb5840a5-7c2c-4fd3-bf5e-c3dcff66a148",
+                "5dab754e-1d5e-4083-a21a-5ba86d04b3a6"
+                
+              ]
+         }
+       ]
+        )
+        {
+         score 
+          questions {
+            question
+            correct
+            answered
+            givenAnswers {
+              answer
+            }
+            correctAnswers {
+              answer
+            }
+          }
+        }
+      }
+      ```
+      The first id is the id of the quiz.     
+      For answer to be correct you need to fill givenAnswers input:   
+         - give id of 1 correct answer in [] if it is single answer question    
+         - give ids of all correct answers in [] if it is multiple answer question   
+         - give ids of all answers sorted in [] if it is sorting question (e.g. if answer1<answer2 then answer1.id is before answer2.id in submitted array)   
+         - give one answer in [] if it is plain text answer question. Upper letters and double spaces don't matter   
+      You need to remember that answered questions must belong to quiz and answers to theirs questions. Also, ids and answers for plain text answer questions are strings.    
+      You can get overall score and view of which questions were answered correctly and what are correct answers.     
+
+**Notes about fields**
+- _possibleAnswers_ in question is what should be displayed for students (e.g. to choose one correct). _answers_ in questions are answers given by teacher.    
+- _type_ in question returns string informing what is the type of the question - sorting, single answer etc.      
+- only one of the fields _singleAnswer_, _multipleAnswer_, _sorting_ and _plainText_ in question can be marked as true, they are the ones that indicate the type of question.    
+
+## More about the code
+**ER diagram**   
+![image](https://github.com/nkulakow/quiz-application/assets/117579584/9c77ccc0-5b68-49ee-b259-e185618f7cdc)   
+Questions belong to the quiz. Answers, given by teachers, belong to questions.   
+
+**Inputs**   
+Given inputs are checked. If program notices an incorrectness, corresponing error is thrown. Custom exceptions are in the folder "src/excpetions/.   
+
+**Services**   
+- _AnswerService_ is responsible for managing "Answer" entity in DB - creating, finding one and updating anwers.   
+- _QuestionService_ is responsible for managing "Question" entity in DB - creating, finding one, updating and removing questions. It uses injected _AnswerService_ to manage answers (because they depend on questions). It checks if given answer for specific question is correct.    
+- _QuizService_ is responsible for managing "Quiz" entity in DB - creating, finding one, finding all, updating and removing quizes. Like _QuestionService_ it sometimes uses injected _QuestionService_ to manage questions. It allows to submit answers and to get a result.    
+
+**Resolvers**    
+- _QuestionResolver_ allows to add question to quiz, find one, update or remove question. It also resolves fields _type_ and _possibleAnswers_.     
+- _QuizResolver_ allows to create quiz (with or without questions), find one/all, update or remove quiz and submit answers.   
+ 
+**Tests**     
+To run use `npm run test` or `npm test -- --testPathPattern=src/question/question.service.spec.ts` for specific file.   
+Tested are: QuestionService and QuizService. Resolvers had to be tested "manually" (in GraphQL Playground).   
+In tests database is mocked and needed methods are mocked individually in different unit tests (as there were different things needed).    
+
