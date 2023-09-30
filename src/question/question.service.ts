@@ -11,9 +11,10 @@ import { GiveAnswerInput } from "./dto/give-answers.input";
 import { ResultForQuestionOutput } from "./dto/result-for-question.output";
 import { AnswerForResultOutput } from "@src/answer/dto/answer-for-result.output";
 import { CreateAnswerInput } from "@src/answer/dto/create-answer.input";
-import { LengthEqualsZeroException } from "@src/excpetions/length-equals-zero-exception";
-import { DuplicateAnswerForQuestionException } from "@src/excpetions/duplicate-answer-for-question-exception";
-import { AnswerDoesNotBelongToQuestionException } from "@src/excpetions/answer-does-not-belong-to-question-exception";
+import { LengthEqualsZeroException } from "@src/exceptions/length-equals-zero-exception";
+import { DuplicateAnswerForQuestionException } from "@src/exceptions/duplicate-answer-for-question-exception";
+import { AnswerDoesNotBelongToQuestionException } from "@src/exceptions/answer-does-not-belong-to-question-exception";
+import { QuestionDoesNotBelongToQuizException } from "@src/exceptions/question-does-not-belong-to-quiz-exception";
 
 @Injectable()
 export class QuestionService {
@@ -225,8 +226,28 @@ export class QuestionService {
     return questionToRemove;
   }
 
-  async checkAnswer(givenAnswer: GiveAnswerInput) {
+  async checkAnswer(givenAnswer: GiveAnswerInput, quizId: string) {
     let question = await this.findOne(givenAnswer.questionId);
+    if (!question) {
+      throw new NotFoundException(
+        `Question with id ${givenAnswer.questionId} not found`
+      );
+    }
+    if (question.quizId !== quizId) {
+      throw new QuestionDoesNotBelongToQuizException(
+        `Question with id ${givenAnswer.questionId} does not belong to quiz with id ${quizId}`
+      );
+    }
+    if (question.plainText) {
+      return this.checkPlainTextAnswer(question, givenAnswer.answers[0]);
+    }
+    for (let answerId of givenAnswer.answers) {
+      if (!question.answers.find((answer) => answer.id === answerId)) {
+        throw new AnswerDoesNotBelongToQuestionException(
+          `Answer with id ${answerId} does not belong to question with id ${givenAnswer.questionId}`
+        );
+      }
+    }
     if (question.singleAnswer) {
       return this.checkSingleAnswer(question, givenAnswer.answers[0]);
     }
@@ -235,9 +256,6 @@ export class QuestionService {
     }
     if (question.sorting) {
       return this.checkSortingAnswer(question, givenAnswer.answers);
-    }
-    if (question.plainText) {
-      return this.checkPlainTextAnswer(question, givenAnswer.answers[0]);
     }
   }
 

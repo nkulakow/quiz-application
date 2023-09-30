@@ -4,7 +4,7 @@ import { UpdateAnswerInput } from "./dto/update-answer.input";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Answer } from "./entities/answer.entity";
-import { LengthEqualsZeroException } from "@src/excpetions/length-equals-zero-exception";
+import { LengthEqualsZeroException } from "@src/exceptions/length-equals-zero-exception";
 
 @Injectable()
 export class AnswerService {

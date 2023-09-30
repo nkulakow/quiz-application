@@ -9,7 +9,7 @@ import { UpdateQuestionInput } from "../../src/question/dto/update-question.inpu
 import { UpdateAnswerInput } from "../../src/answer/dto/update-answer.input";
 import { GiveAnswerInput } from "./dto/give-answers.input";
 import { AnswerService } from "@src/answer/answer.service";
-import { AnswerDoesNotBelongToQuestionException } from "@src/excpetions/answer-does-not-belong-to-question-exception";
+import { AnswerDoesNotBelongToQuestionException } from "@src/exceptions/answer-does-not-belong-to-question-exception";
 
 interface EntityWithId {
   id: string;
@@ -423,7 +423,8 @@ describe("QuestionService", () => {
       null,
       null,
       null,
-      answersInput
+      answersInput,
+      "quiz-id"
     );
 
     const givenAnswerInput = new GiveAnswerInput("custom-question-id", [
@@ -469,9 +470,12 @@ describe("QuestionService", () => {
       .mockImplementation((answer) => answer);
 
     await service.create(createQuestionInput);
-    const answer = await service.checkAnswer(givenAnswerInput);
+    const answer = await service.checkAnswer(givenAnswerInput, "quiz-id");
     expect(answer.correct).toBe(true);
-    const incorrectAnswer = await service.checkAnswer(incorrectAnswerInput);
+    const incorrectAnswer = await service.checkAnswer(
+      incorrectAnswerInput,
+      "quiz-id"
+    );
     expect(incorrectAnswer.correct).toBe(false);
   });
 
@@ -491,7 +495,8 @@ describe("QuestionService", () => {
       true,
       null,
       null,
-      answersInput
+      answersInput,
+      "quiz-id"
     );
 
     const correctAnswerInput = new GiveAnswerInput("custom-question-id", [
@@ -546,13 +551,22 @@ describe("QuestionService", () => {
       .mockImplementation((answer) => answer);
 
     await service.create(createQuestionInput);
-    const answer = await service.checkAnswer(correctAnswerInput);
+    const answer = await service.checkAnswer(correctAnswerInput, "quiz-id");
     expect(answer.correct).toBe(true);
-    const incorrectAnswer1 = await service.checkAnswer(incorrectAnswerInput1);
+    const incorrectAnswer1 = await service.checkAnswer(
+      incorrectAnswerInput1,
+      "quiz-id"
+    );
     expect(incorrectAnswer1.correct).toBe(false);
-    const incorrectAnswer2 = await service.checkAnswer(incorrectAnswerInput2);
+    const incorrectAnswer2 = await service.checkAnswer(
+      incorrectAnswerInput2,
+      "quiz-id"
+    );
     expect(incorrectAnswer2.correct).toBe(false);
-    const incorrectAnswer3 = await service.checkAnswer(incorrectAnswerInput3);
+    const incorrectAnswer3 = await service.checkAnswer(
+      incorrectAnswerInput3,
+      "quiz-id"
+    );
     expect(incorrectAnswer3.correct).toBe(false);
   });
 
@@ -571,7 +585,8 @@ describe("QuestionService", () => {
       null,
       true,
       null,
-      answersInput
+      answersInput,
+      "quiz-id"
     );
 
     const correctAnswerInput = new GiveAnswerInput("custom-question-id", [
@@ -623,11 +638,17 @@ describe("QuestionService", () => {
       .mockImplementation((answer) => answer);
 
     await service.create(createQuestionInput);
-    const answer = await service.checkAnswer(correctAnswerInput);
+    const answer = await service.checkAnswer(correctAnswerInput, "quiz-id");
     expect(answer.correct).toBe(true);
-    const incorrectAnswer1 = await service.checkAnswer(incorrectAnswerInput1);
+    const incorrectAnswer1 = await service.checkAnswer(
+      incorrectAnswerInput1,
+      "quiz-id"
+    );
     expect(incorrectAnswer1.correct).toBe(false);
-    const incorrectAnswer2 = await service.checkAnswer(incorrectAnswerInput2);
+    const incorrectAnswer2 = await service.checkAnswer(
+      incorrectAnswerInput2,
+      "quiz-id"
+    );
     expect(incorrectAnswer2.correct).toBe(false);
   });
 
@@ -642,7 +663,8 @@ describe("QuestionService", () => {
       null,
       null,
       true,
-      answersInput
+      answersInput,
+      "quiz-id"
     );
 
     const correctAnswerInput1 = new GiveAnswerInput("custom-question-id", [
@@ -693,13 +715,19 @@ describe("QuestionService", () => {
       .mockImplementation((answer) => answer);
 
     await service.create(createQuestionInput);
-    const answer1 = await service.checkAnswer(correctAnswerInput1);
+    const answer1 = await service.checkAnswer(correctAnswerInput1, "quiz-id");
     expect(answer1.correct).toBe(true);
-    const answer2 = await service.checkAnswer(correctAnswerInput2);
+    const answer2 = await service.checkAnswer(correctAnswerInput2, "quiz-id");
     expect(answer2.correct).toBe(true);
-    const incorrectAnswer1 = await service.checkAnswer(incorrectAnswerInput1);
+    const incorrectAnswer1 = await service.checkAnswer(
+      incorrectAnswerInput1,
+      "quiz-id"
+    );
     expect(incorrectAnswer1.correct).toBe(false);
-    const incorrectAnswer2 = await service.checkAnswer(incorrectAnswerInput2);
+    const incorrectAnswer2 = await service.checkAnswer(
+      incorrectAnswerInput2,
+      "quiz-id"
+    );
     expect(incorrectAnswer2.correct).toBe(false);
   });
 

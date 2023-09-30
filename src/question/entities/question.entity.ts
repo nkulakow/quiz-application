@@ -56,9 +56,6 @@ export class Question {
   @Field(() => [Answer])
   answers: Answer[];
 
-  @Field({ nullable: true })
-  type: string;
-
   @ManyToOne(() => Quiz, (quiz) => quiz.questions)
   @Field(() => Quiz)
   quiz: Quiz;

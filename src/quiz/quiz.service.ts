@@ -10,7 +10,7 @@ import { GiveAnswerInput } from "@src/question/dto/give-answers.input";
 import { GetResultOutput } from "./dto/get-result.output";
 import { ResultForQuestionOutput } from "@src/question/dto/result-for-question.output";
 import { AnswerForResultOutput } from "@src/answer/dto/answer-for-result.output";
-import { LengthEqualsZeroException } from "@src/excpetions/length-equals-zero-exception";
+import { LengthEqualsZeroException } from "@src/exceptions/length-equals-zero-exception";
 
 @Injectable()
 export class QuizService {
@@ -77,11 +77,16 @@ export class QuizService {
     let score = 0;
     let answeredQuestionsIds = [];
     let getResultOutput = new GetResultOutput(id, 0, []);
+    let quiz = await this.findOne(id);
+    if (!quiz) {
+      throw new NotFoundException(`Quiz with id ${id} not found`);
+    }
 
     for (let givenAnswer of givenAnswers)
       await processAnswer(givenAnswer, this.questionService);
-    let quiz = await this.findOne(id);
-    getResultOutput.score = (score * 100) / quiz.questions.length;
+    getResultOutput.score = parseFloat(
+      ((score * 100) / quiz.questions.length).toFixed(2)
+    );
 
     processUnansweredQuestions(quiz, this.questionService);
 
@@ -91,7 +96,10 @@ export class QuizService {
       givenAnswer: GiveAnswerInput,
       questionService: QuestionService
     ) {
-      const scoreForQuestion = await questionService.checkAnswer(givenAnswer);
+      const scoreForQuestion = await questionService.checkAnswer(
+        givenAnswer,
+        quiz.id
+      );
       if (scoreForQuestion.correct) score++;
       getResultOutput.questions.push(scoreForQuestion);
       answeredQuestionsIds.push(givenAnswer.questionId);
