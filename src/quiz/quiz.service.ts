@@ -6,34 +6,31 @@ import { Quiz } from "./entities/quiz.entity";
 import { Question } from "@src/question/entities/question.entity";
 import { Repository } from "typeorm";
 import { QuestionService } from "@src/question/question.service";
-import { Answer } from "@src/answer/entities/answer.entity";
 import { GiveAnswerInput } from "@src/question/dto/give-answers.input";
 import { GetResultOutput } from "./dto/get-result.output";
 import { ResultForQuestionOutput } from "@src/question/dto/result-for-question.output";
 import { AnswerForResultOutput } from "@src/answer/dto/answer-for-result.output";
+import { LengthEqualsZeroException } from "@src/exceptions/length-equals-zero-exception";
 
 @Injectable()
 export class QuizService {
   constructor(
     @InjectRepository(Quiz) private quizRepository: Repository<Quiz>,
-    @InjectRepository(Question)
-    private questionRepository: Repository<Question>,
-    @InjectRepository(Answer) private answerRepository: Repository<Answer>
+    private questionService: QuestionService
   ) {}
 
   async create(createQuizInput: CreateQuizInput) {
+    if (createQuizInput.name.length < 1) {
+      throw new LengthEqualsZeroException(`Quiz name cannot be empty`);
+    }
     let quizToCreate = this.quizRepository.create(createQuizInput);
     let createdQuiz = await this.quizRepository.save(quizToCreate);
     let quizId = createdQuiz.id;
     let questionsInput = createQuizInput.questions;
     createdQuiz.questions = [];
-    const QuestionServiceInstance = new QuestionService(
-      this.questionRepository,
-      this.answerRepository
-    );
     for (let questionInput of questionsInput) {
       questionInput.quizId = quizId;
-      let question = await QuestionServiceInstance.create(questionInput);
+      let question = await this.questionService.create(questionInput);
       createdQuiz.questions.push(question);
     }
     return createdQuiz;
@@ -68,12 +65,8 @@ export class QuizService {
       throw new NotFoundException(`Quiz with id ${id} not found`);
     }
     const questionsToRemove = quizToRemove.questions;
-    const QuestionServiceInstance = new QuestionService(
-      this.questionRepository,
-      this.answerRepository
-    );
     for (let question of questionsToRemove) {
-      await QuestionServiceInstance.remove(question.id);
+      await this.questionService.remove(question.id);
     }
     await this.quizRepository.remove(quizToRemove);
     quizToRemove.id = id;
@@ -82,42 +75,56 @@ export class QuizService {
 
   async submitAnswers(id: string, givenAnswers: GiveAnswerInput[]) {
     let score = 0;
-    const QuestionServiceInstance = new QuestionService(
-      this.questionRepository,
-      this.answerRepository
-    );
     let answeredQuestionsIds = [];
     let getResultOutput = new GetResultOutput(id, 0, []);
-
-    for (let givenAnswer of givenAnswers) await processAnswer(givenAnswer);
     let quiz = await this.findOne(id);
-    getResultOutput.score = (score * 100) / quiz.questions.length;
+    if (!quiz) {
+      throw new NotFoundException(`Quiz with id ${id} not found`);
+    }
 
-    processUnansweredQuestions(quiz);
+    for (let givenAnswer of givenAnswers)
+      await processAnswer(givenAnswer, this.questionService);
+    getResultOutput.score = parseFloat(
+      ((score * 100) / quiz.questions.length).toFixed(2)
+    );
+
+    processUnansweredQuestions(quiz, this.questionService);
 
     return getResultOutput;
 
-    async function processAnswer(givenAnswer: GiveAnswerInput) {
-      const scoreForQuestion =
-        await QuestionServiceInstance.checkAnswer(givenAnswer);
+    async function processAnswer(
+      givenAnswer: GiveAnswerInput,
+      questionService: QuestionService
+    ) {
+      const scoreForQuestion = await questionService.checkAnswer(
+        givenAnswer,
+        quiz.id
+      );
       if (scoreForQuestion.correct) score++;
       getResultOutput.questions.push(scoreForQuestion);
       answeredQuestionsIds.push(givenAnswer.questionId);
     }
 
-    async function processUnansweredQuestions(quiz: Quiz) {
+    async function processUnansweredQuestions(
+      quiz: Quiz,
+      questionService: QuestionService
+    ) {
       for (let question of quiz.questions) {
         if (!answeredQuestionsIds.includes(question.id)) {
-          const scoreForQuestion =
-            await createScoreForUnansweredQuestion(question);
+          const scoreForQuestion = await createScoreForUnansweredQuestion(
+            question,
+            questionService
+          );
           getResultOutput.questions.push(scoreForQuestion);
         }
       }
     }
 
-    async function createScoreForUnansweredQuestion(question: Question) {
-      const correctAnswers =
-        QuestionServiceInstance.getCorrectAnswers(question);
+    async function createScoreForUnansweredQuestion(
+      question: Question,
+      questionService: QuestionService
+    ) {
+      const correctAnswers = questionService.getCorrectAnswers(question);
       const correctAnswersMapped = correctAnswers.map(
         (answer) => new AnswerForResultOutput(answer.id, answer.answer)
       );

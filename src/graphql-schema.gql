@@ -25,9 +25,9 @@ type Question {
   sorting: Boolean
   plainText: Boolean
   answers: [Answer!]!
-  type: String
   quiz: Quiz!
   quizId: String!
+  type: String
   possibleAnswers: [Answer!]
 }
 
