@@ -316,3 +316,5 @@ To run use `npm run test` or `npm test -- --testPathPattern=src/question/questio
 Tested are: QuestionService and QuizService. Resolvers had to be tested "manually" (in GraphQL Playground).   
 In tests database is mocked and needed methods are mocked individually in different unit tests (as there were different things needed).    
 
+**Env**   
+You can rewrite the default values in ".env" file to match your local environment
