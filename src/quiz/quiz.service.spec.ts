@@ -11,6 +11,8 @@ import { UpdateQuizInput } from "./dto/update-quiz.input";
 import { GiveAnswerInput } from "@src/question/dto/give-answers.input";
 import { QuestionService } from "@src/question/question.service";
 import { AnswerService } from "@src/answer/answer.service";
+import { LengthEqualsZeroException } from "@src/exceptions/length-equals-zero-exception";
+import { NotFoundException } from "@nestjs/common";
 
 interface EntityWithId {
   id: string;
@@ -26,6 +28,9 @@ class MockRepository<T extends EntityWithId> {
   }
   findOne(query: any): T | undefined {
     return undefined;
+  }
+  remove(entity: T): T {
+    return entity;
   }
   //they are actually implemented in the tests (see below)
 }
@@ -71,6 +76,13 @@ describe("QuizService", () => {
     expect(quizRepositoryMock.create).toBeCalledWith(createQuizInput);
     expect(quizRepositoryMock.save).toBeCalledWith(createQuizInput);
     expect(createdQuiz.questions).toEqual([]);
+  });
+
+  it("should throw LengthEqualsZeroException while creating a quiz", async () => {
+    const badQuizInput = new CreateQuizInput("", []);
+    expect(service.create(badQuizInput)).rejects.toThrow(
+      LengthEqualsZeroException
+    );
   });
 
   it("should create a quiz with a question", async () => {
@@ -177,6 +189,99 @@ describe("QuizService", () => {
     await service.create(createQuizInput);
     const updatedQuiz = await service.update(updateQuizInput);
     expect(updatedQuiz.name).toEqual(updateQuizInput.name);
+  });
+
+  it("should throw NotFoundException while updating a quiz", async () => {
+    quizRepositoryMock.entities = [];
+    questionRepositoryMock.entities = [];
+    answerRepositoryMock.entities = [];
+
+    const createQuizInput = new CreateQuizInput("Test Quiz", []);
+
+    const updateQuizInput = new UpdateQuizInput(
+      "another-quiz-id",
+      "Test Quiz Updated"
+    );
+
+    quizRepositoryMock.create = jest.fn().mockImplementation((entity) => {
+      entity.id = "custom-quiz-id";
+      return entity;
+    });
+
+    quizRepositoryMock.save = jest.fn().mockImplementation((entity) => {
+      const index = quizRepositoryMock.entities.findIndex(
+        (e) => e.id === entity.id
+      );
+      if (index !== -1) {
+        if (entity.name) quizRepositoryMock.entities[index].name = entity.name;
+      } else {
+        quizRepositoryMock.entities.push(entity);
+      }
+      return entity;
+    });
+
+    quizRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
+      const id = query.where.id;
+      const foundEntity = quizRepositoryMock.entities.find(
+        (entity) => entity.id === id
+      );
+      return foundEntity || undefined;
+    });
+
+    await service.create(createQuizInput);
+    try {
+      await service.update(updateQuizInput);
+    } catch (e) {
+      expect(e).toBeInstanceOf(NotFoundException);
+    }
+  });
+
+  it("should remove a quiz", async () => {
+    quizRepositoryMock.entities = [];
+    questionRepositoryMock.entities = [];
+    answerRepositoryMock.entities = [];
+
+    const createQuizInput = new CreateQuizInput("Test Quiz", []);
+
+    quizRepositoryMock.create = jest.fn().mockImplementation((entity) => {
+      entity.id = "custom-quiz-id";
+      return entity;
+    });
+
+    quizRepositoryMock.save = jest.fn().mockImplementation((entity) => {
+      const index = quizRepositoryMock.entities.findIndex(
+        (e) => e.id === entity.id
+      );
+      if (index !== -1) {
+        if (entity.name) quizRepositoryMock.entities[index].name = entity.name;
+      } else {
+        quizRepositoryMock.entities.push(entity);
+      }
+      return entity;
+    });
+
+    quizRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
+      const id = query.where.id;
+      const foundEntity = quizRepositoryMock.entities.find(
+        (entity) => entity.id === id
+      );
+      return foundEntity || undefined;
+    });
+
+    quizRepositoryMock.remove = jest.fn().mockImplementation((entity) => {
+      const index = quizRepositoryMock.entities.findIndex(
+        (e) => e.id === entity.id
+      );
+      if (index !== -1) {
+        quizRepositoryMock.entities.splice(index, 1);
+      }
+      return entity;
+    });
+
+    await service.create(createQuizInput);
+    const removedQuiz = await service.remove("custom-quiz-id");
+    expect(removedQuiz.id).toEqual("custom-quiz-id");
+    expect(quizRepositoryMock.entities.length).toEqual(0);
   });
 
   it("should submit answers and give score", async () => {
