@@ -10,6 +10,10 @@ import { UpdateAnswerInput } from "../../src/answer/dto/update-answer.input";
 import { GiveAnswerInput } from "./dto/give-answers.input";
 import { AnswerService } from "@src/answer/answer.service";
 import { AnswerDoesNotBelongToQuestionException } from "@src/exceptions/answer-does-not-belong-to-question-exception";
+import { LengthEqualsZeroException } from "@src/exceptions/length-equals-zero-exception";
+import { DuplicateAnswerForQuestionException } from "@src/exceptions/duplicate-answer-for-question-exception";
+import { IncorrectFieldForQuestionException } from "@src/exceptions/incorrect-field-for-question-exception";
+import { QuestionDoesNotBelongToQuizException } from "@src/exceptions/question-does-not-belong-to-quiz-exception";
 
 interface EntityWithId {
   id: string;
@@ -25,6 +29,9 @@ class MockRepository<T extends EntityWithId> {
   }
   findOne(query: any): T | undefined {
     return undefined;
+  }
+  remove(entity: T): T {
+    return entity;
   }
   //they are actually implemented in the tests (see below)
 }
@@ -130,6 +137,143 @@ describe("QuestionService", () => {
     }
   });
 
+  it("should throw LengthEqualsZeroException while creating the question", async () => {
+    const answersInput = [
+      new CreateAnswerInput("Paris", true, null),
+      new CreateAnswerInput("London", false, null),
+    ];
+    const createQuestionInput = new CreateQuestionInput(
+      "",
+      true,
+      null,
+      null,
+      null,
+      answersInput
+    );
+
+    expect(service.create(createQuestionInput)).rejects.toThrow(
+      LengthEqualsZeroException
+    );
+  });
+
+  it("should throw IncorrectFieldForQuestionException while creating the question", async () => {
+    const createQuestionInput1 = new CreateQuestionInput(
+      "Question",
+      true,
+      true,
+      null,
+      null,
+      [
+        new CreateAnswerInput("Paris", true, null),
+        new CreateAnswerInput("London", false, null),
+      ]
+    );
+    const createQuestionInput2 = new CreateQuestionInput(
+      "Question",
+      false,
+      false,
+      true,
+      null,
+      [
+        new CreateAnswerInput("Paris", null, null),
+        new CreateAnswerInput("London", null, 1),
+      ]
+    );
+    const createQuestionInput3 = new CreateQuestionInput(
+      "Question",
+      false,
+      true,
+      null,
+      null,
+      [
+        new CreateAnswerInput("Paris", null, null),
+        new CreateAnswerInput("London", false, null),
+      ]
+    );
+    const createQuestionInput4 = new CreateQuestionInput(
+      "Question",
+      null,
+      null,
+      null,
+      true,
+      [
+        new CreateAnswerInput("Paris", null, null),
+        new CreateAnswerInput("London", null, null),
+      ]
+    );
+    const createQuestionInput5 = new CreateQuestionInput(
+      "Question",
+      true,
+      null,
+      null,
+      null,
+      [
+        new CreateAnswerInput("Paris", true, null),
+        new CreateAnswerInput("London", true, null),
+      ]
+    );
+
+    expect(service.create(createQuestionInput1)).rejects.toThrow(
+      IncorrectFieldForQuestionException
+    );
+    expect(service.create(createQuestionInput2)).rejects.toThrow(
+      IncorrectFieldForQuestionException
+    );
+    expect(service.create(createQuestionInput3)).rejects.toThrow(
+      IncorrectFieldForQuestionException
+    );
+    expect(service.create(createQuestionInput4)).rejects.toThrow(
+      IncorrectFieldForQuestionException
+    );
+    expect(service.create(createQuestionInput5)).rejects.toThrow(
+      IncorrectFieldForQuestionException
+    );
+  });
+
+  it("should throw DuplicateAnswerForQuestionException while creating the question", async () => {
+    const answersInput = [
+      new CreateAnswerInput("Paris", true, null),
+      new CreateAnswerInput("Paris", false, null),
+    ];
+    const createQuestionInput = new CreateQuestionInput(
+      "What is the capital of France?",
+      true,
+      null,
+      null,
+      null,
+      answersInput
+    );
+
+    questionRepositoryMock.create = jest.fn().mockImplementation((entity) => {
+      entity.id = "custom-question-id";
+      return entity;
+    });
+
+    questionRepositoryMock.save = jest.fn().mockImplementation((entity) => {
+      questionRepositoryMock.entities.push(entity);
+      return entity;
+    });
+
+    questionRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
+      const id = query.where.id;
+      const foundEntity = questionRepositoryMock.entities.find(
+        (entity) => entity.id === id
+      );
+      return foundEntity || undefined;
+    });
+    answerRepositoryMock.create = jest.fn().mockImplementation((answer) => ({
+      ...answer,
+      id: "generated-answer-id",
+    }));
+    answerRepositoryMock.save = jest
+      .fn()
+      .mockImplementation((answer) => answer);
+
+    expect(service.create(createQuestionInput)).rejects.toThrow(
+      DuplicateAnswerForQuestionException
+    );
+  });
+
   it("should update a question", async () => {
     answerRepositoryMock.entities = [];
     questionRepositoryMock.entities = [];
@@ -202,7 +346,7 @@ describe("QuestionService", () => {
     expect(updatedQuestion.singleAnswer).toEqual(true);
   });
 
-  it("should throw an error when updating a question with an answer that does not belong to it", async () => {
+  it("should throw an AnswerDoesNotBelongToQuestionException when updating a question with an answer that does not belong to it", async () => {
     answerRepositoryMock.entities = [];
     questionRepositoryMock.entities = [];
 
@@ -313,6 +457,99 @@ describe("QuestionService", () => {
     );
   });
 
+  it("should throw an DuplicateAnswerForQuestionException when updating a question", async () => {
+    answerRepositoryMock.entities = [];
+    questionRepositoryMock.entities = [];
+
+    const answersInput = [
+      new CreateAnswerInput("Paris", true, null),
+      new CreateAnswerInput("London", false, null),
+    ];
+    const createQuestionInput = new CreateQuestionInput(
+      "What is the capital of France?",
+      true,
+      null,
+      null,
+      null,
+      answersInput
+    );
+
+    const newAnswers = [new CreateAnswerInput("Paris", false, null)];
+    const updateQuestionInput = new UpdateQuestionInput(
+      "custom-question-id",
+      "Choose the capital of France:",
+      null,
+      null,
+      null,
+      null,
+      null,
+      newAnswers,
+      null
+    );
+
+    questionRepositoryMock.create = jest.fn().mockImplementation((entity) => {
+      entity.id = "custom-question-id";
+      return entity;
+    });
+
+    questionRepositoryMock.save = jest.fn().mockImplementation((entity) => {
+      const index = questionRepositoryMock.entities.findIndex(
+        (e) => e.id === entity.id
+      );
+      if (index !== -1) {
+        if (entity.question)
+          questionRepositoryMock.entities[index].question = entity.question;
+        if (entity.singleAnswer)
+          questionRepositoryMock.entities[index].singleAnswer =
+            entity.singleAnswer;
+      } else {
+        questionRepositoryMock.entities.push(entity);
+      }
+      return entity;
+    });
+
+    questionRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
+      const id = query.where.id;
+      const foundEntity = questionRepositoryMock.entities.find(
+        (entity) => entity.id === id
+      );
+      return foundEntity || undefined;
+    });
+
+    answerRepositoryMock.create = jest.fn().mockImplementation((entity) => {
+      entity.id = "generated-answer-id-" + entity.answer;
+      return entity;
+    });
+
+    answerRepositoryMock.save = jest.fn().mockImplementation((entity) => {
+      const index = answerRepositoryMock.entities.findIndex(
+        (e) => e.id === entity.id
+      );
+      if (index !== -1) {
+        if (entity.answer)
+          answerRepositoryMock.entities[index].answer = entity.answer;
+        if (entity.correct)
+          answerRepositoryMock.entities[index].correct = entity.correct;
+      } else {
+        answerRepositoryMock.entities.push(entity);
+      }
+      return entity;
+    });
+
+    answerRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
+      const id = query.where.id;
+      const foundEntity = answerRepositoryMock.entities.find(
+        (entity) => entity.id === id
+      );
+      return foundEntity || undefined;
+    });
+
+    await service.create(createQuestionInput);
+    expect(service.update(updateQuestionInput)).rejects.toThrow(
+      DuplicateAnswerForQuestionException
+    );
+  });
+
   it("should create new answer while updating the question", async () => {
     answerRepositoryMock.entities = [];
     questionRepositoryMock.entities = [];
@@ -341,8 +578,6 @@ describe("QuestionService", () => {
       [new CreateAnswerInput("Madrid", false, null)],
       null
     );
-    updateQuestionInput.question = "Choose the capital of France:";
-    updateQuestionInput.id = "custom-question-id";
 
     questionRepositoryMock.create = jest.fn().mockImplementation((entity) => {
       entity.id = "custom-question-id";
@@ -407,6 +642,170 @@ describe("QuestionService", () => {
     expect(updatedQuestion.answers.map((answer) => answer.answer)).toContain(
       "Madrid"
     );
+  });
+
+  it("should remove answer while updating the question", async () => {
+    answerRepositoryMock.entities = [];
+    questionRepositoryMock.entities = [];
+
+    const answersInput = [
+      new CreateAnswerInput("Paris", true, null),
+      new CreateAnswerInput("London", false, null),
+    ];
+    const createQuestionInput = new CreateQuestionInput(
+      "What is the capital of France?",
+      true,
+      null,
+      null,
+      null,
+      answersInput
+    );
+
+    const updateQuestionInput = new UpdateQuestionInput(
+      "custom-question-id",
+      "Choose the capital of France:",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      ["generated-answer-id-London"]
+    );
+
+    questionRepositoryMock.create = jest.fn().mockImplementation((entity) => {
+      entity.id = "custom-question-id";
+      return entity;
+    });
+
+    questionRepositoryMock.save = jest.fn().mockImplementation((entity) => {
+      questionRepositoryMock.entities.push(entity);
+      return entity;
+    });
+
+    questionRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
+      const id = query.where.id;
+      const foundEntity = questionRepositoryMock.entities.find(
+        (entity) => entity.id === id
+      );
+      return foundEntity || undefined;
+    });
+
+    answerRepositoryMock.create = jest.fn().mockImplementation((entity) => {
+      entity.id = "generated-answer-id-" + entity.answer;
+      return entity;
+    });
+
+    answerRepositoryMock.save = jest.fn().mockImplementation((entity) => {
+      answerRepositoryMock.entities.push(entity);
+      return entity;
+    });
+
+    answerRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
+      const id = query.where.id;
+      const foundEntity = answerRepositoryMock.entities.find(
+        (entity) => entity.id === id
+      );
+      return foundEntity || undefined;
+    });
+
+    answerRepositoryMock.remove = jest.fn().mockImplementation((entities) => {
+      for (let entity of entities) {
+        const index = answerRepositoryMock.entities.findIndex(
+          (e) => e.id === entity.id
+        );
+        if (index !== -1) {
+          answerRepositoryMock.entities.splice(index, 1);
+        }
+      }
+      return entities;
+    });
+
+    await service.create(createQuestionInput);
+    await service.update(updateQuestionInput);
+    expect(answerRepositoryMock.entities).toHaveLength(1);
+  });
+
+  it("should remove question", async () => {
+    answerRepositoryMock.entities = [];
+    questionRepositoryMock.entities = [];
+
+    const answersInput = [
+      new CreateAnswerInput("Paris", true, null),
+      new CreateAnswerInput("London", false, null),
+    ];
+    const createQuestionInput = new CreateQuestionInput(
+      "What is the capital of France?",
+      true,
+      null,
+      null,
+      null,
+      answersInput
+    );
+
+    questionRepositoryMock.create = jest.fn().mockImplementation((entity) => {
+      entity.id = "custom-question-id";
+      return entity;
+    });
+
+    questionRepositoryMock.save = jest.fn().mockImplementation((entity) => {
+      questionRepositoryMock.entities.push(entity);
+      return entity;
+    });
+
+    questionRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
+      const id = query.where.id;
+      const foundEntity = questionRepositoryMock.entities.find(
+        (entity) => entity.id === id
+      );
+      return foundEntity || undefined;
+    });
+
+    questionRepositoryMock.remove = jest.fn().mockImplementation((entity) => {
+      const index = questionRepositoryMock.entities.findIndex(
+        (e) => e.id === entity.id
+      );
+      if (index !== -1) {
+        questionRepositoryMock.entities.splice(index, 1);
+      }
+      return entity;
+    });
+
+    answerRepositoryMock.create = jest.fn().mockImplementation((entity) => {
+      entity.id = "generated-answer-id-" + entity.answer;
+      return entity;
+    });
+
+    answerRepositoryMock.save = jest.fn().mockImplementation((entity) => {
+      answerRepositoryMock.entities.push(entity);
+      return entity;
+    });
+
+    answerRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
+      const id = query.where.id;
+      const foundEntity = answerRepositoryMock.entities.find(
+        (entity) => entity.id === id
+      );
+      return foundEntity || undefined;
+    });
+
+    answerRepositoryMock.remove = jest.fn().mockImplementation((entities) => {
+      for (let entity of entities) {
+        const index = answerRepositoryMock.entities.findIndex(
+          (e) => e.id === entity.id
+        );
+        if (index !== -1) {
+          answerRepositoryMock.entities.splice(index, 1);
+        }
+      }
+      return entities;
+    });
+
+    await service.create(createQuestionInput);
+    const questionRemoved = await service.remove("custom-question-id");
+    expect(questionRemoved.question).toEqual(createQuestionInput.question);
+    expect(questionRepositoryMock.entities).toHaveLength(0);
+    expect(answerRepositoryMock.entities).toHaveLength(0);
   });
 
   it("answer for a single answer question should be correct", async () => {
@@ -844,5 +1243,71 @@ describe("QuestionService", () => {
     question = await service.findOne("custom-question-id-3");
     correctAnswers = service.getCorrectAnswers(question);
     expect(correctAnswers[0].answer).toEqual("Paris");
+  });
+
+  it("should throw QuestionDoesNotBelongToQuizException while checking answer", async () => {
+    answerRepositoryMock.entities = [];
+    questionRepositoryMock.entities = [];
+
+    const answersInput = [
+      new CreateAnswerInput("Paris", true, null),
+      new CreateAnswerInput("London", false, null),
+    ];
+    const createQuestionInput = new CreateQuestionInput(
+      "What is the capital of France?",
+      true,
+      null,
+      null,
+      null,
+      answersInput,
+      "quiz-id"
+    );
+
+    const givenAnswerInput = new GiveAnswerInput("custom-question-id", [
+      "generated-answer-id-Paris",
+    ]);
+
+    const incorrectAnswerInput = new GiveAnswerInput("custom-question-id", [
+      "generated-answer-id-London",
+    ]);
+
+    questionRepositoryMock.create = jest.fn().mockImplementation((entity) => {
+      entity.id = "custom-question-id";
+      return entity;
+    });
+
+    questionRepositoryMock.save = jest.fn().mockImplementation((entity) => {
+      const index = questionRepositoryMock.entities.findIndex(
+        (e) => e.id === entity.id
+      );
+      if (index !== -1) {
+        if (entity.question)
+          questionRepositoryMock.entities[index].question = entity.question;
+      } else {
+        questionRepositoryMock.entities.push(entity);
+      }
+      return entity;
+    });
+
+    questionRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
+      const id = query.where.id;
+      const foundEntity = questionRepositoryMock.entities.find(
+        (entity) => entity.id === id
+      );
+      return foundEntity || undefined;
+    });
+
+    answerRepositoryMock.create = jest.fn().mockImplementation((answer) => ({
+      ...answer,
+      id: "generated-answer-id-" + answer.answer,
+    }));
+    answerRepositoryMock.save = jest
+      .fn()
+      .mockImplementation((answer) => answer);
+
+    await service.create(createQuestionInput);
+    expect(
+      service.checkAnswer(givenAnswerInput, "another-quiz-id")
+    ).rejects.toThrow(QuestionDoesNotBelongToQuizException);
   });
 });

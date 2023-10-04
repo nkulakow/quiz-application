@@ -15,6 +15,7 @@ import { LengthEqualsZeroException } from "@src/exceptions/length-equals-zero-ex
 import { DuplicateAnswerForQuestionException } from "@src/exceptions/duplicate-answer-for-question-exception";
 import { AnswerDoesNotBelongToQuestionException } from "@src/exceptions/answer-does-not-belong-to-question-exception";
 import { QuestionDoesNotBelongToQuizException } from "@src/exceptions/question-does-not-belong-to-quiz-exception";
+import { IncorrectFieldForQuestionException } from "@src/exceptions/incorrect-field-for-question-exception";
 
 @Injectable()
 export class QuestionService {
@@ -93,13 +94,13 @@ export class QuestionService {
       createQuestionInput.plainText,
     ];
     if (typesBoleean.filter(Boolean).length !== 1) {
-      throw new Error(
+      throw new IncorrectFieldForQuestionException(
         `Only one type of question can be true for question: ${createQuestionInput.question}`
       );
     }
     for (let answer of createQuestionInput.answers) {
       if (createQuestionInput.sorting && !answer.number) {
-        throw new Error(
+        throw new IncorrectFieldForQuestionException(
           `Field number is required for answer: ${answer.answer} for sorting question: ${createQuestionInput.question}`
         );
       }
@@ -108,7 +109,7 @@ export class QuestionService {
           createQuestionInput.multipleAnswer) &&
         answer.correct == null
       ) {
-        throw new Error(
+        throw new IncorrectFieldForQuestionException(
           `Field correct is required for answer: ${answer.answer} for single/multiple answers question: ${createQuestionInput.question}`
         );
       }
@@ -117,7 +118,7 @@ export class QuestionService {
       createQuestionInput.plainText &&
       createQuestionInput.answers.length !== 1
     ) {
-      throw new Error(
+      throw new IncorrectFieldForQuestionException(
         `Only one answer is allowed for plain text question: ${createQuestionInput.question}`
       );
     }
@@ -126,7 +127,7 @@ export class QuestionService {
       createQuestionInput.answers.filter((answer) => answer.correct).length !==
         1
     ) {
-      throw new Error(
+      throw new IncorrectFieldForQuestionException(
         `Only one correct answer is allowed for single answer question: ${createQuestionInput.question}`
       );
     }
