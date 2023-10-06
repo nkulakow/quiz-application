@@ -1,0 +1,120 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Answer {
+  id: String!
+  answer: String!
+  correct: Boolean
+  number: Int
+  question: Question!
+  questionId: String!
+}
+
+type Quiz {
+  id: String!
+  name: String!
+  questions: [Question!]
+}
+
+type Question {
+  id: String!
+  question: String!
+  singleAnswer: Boolean
+  multipleAnswer: Boolean
+  sorting: Boolean
+  plainText: Boolean
+  answers: [Answer!]!
+  quiz: Quiz!
+  quizId: String!
+  type: String
+  possibleAnswers: [Answer!]
+}
+
+type AnswerForResultOutput {
+  id: String
+  answer: String!
+}
+
+type ResultForQuestionOutput {
+  id: String!
+  question: String!
+  answered: Boolean!
+  correct: Boolean!
+  givenAnswers: [AnswerForResultOutput!]
+  correctAnswers: [AnswerForResultOutput!]!
+}
+
+type GetResultOutput {
+  quizId: String!
+  score: Float!
+  questions: [ResultForQuestionOutput!]!
+}
+
+type Query {
+  getOneQuestion(id: String!): Question!
+  getAllQuizzes: [Quiz!]!
+  getOneQuiz(id: String!): Quiz!
+  submitAnswers(id: String!, givenAnswers: [GiveAnswerInput!]!): GetResultOutput!
+}
+
+input GiveAnswerInput {
+  questionId: String!
+  answers: [String!]!
+}
+
+type Mutation {
+  addQuestion(addQuestionInput: CreateQuestionInput!): Question!
+  updateQuestion(updateQuestionInput: UpdateQuestionInput!): Question!
+  removeQuestion(id: String!): Question!
+  createQuiz(createQuizInput: CreateQuizInput!): Quiz!
+  updateQuiz(updateQuizInput: UpdateQuizInput!): Quiz!
+  removeQuiz(id: String!): Quiz!
+}
+
+input CreateQuestionInput {
+  question: String!
+  singleAnswer: Boolean
+  multipleAnswer: Boolean
+  sorting: Boolean
+  plainText: Boolean
+  answers: [CreateAnswerInput!]!
+  quizId: String
+}
+
+input CreateAnswerInput {
+  answer: String!
+  correct: Boolean
+  number: Int
+  questionId: String
+}
+
+input UpdateQuestionInput {
+  id: String!
+  question: String
+  singleAnswer: Boolean
+  multipleAnswer: Boolean
+  sorting: Boolean
+  plainText: Boolean
+  answers: [UpdateAnswerInput!]
+  newAnswers: [CreateAnswerInput!]
+  deleteAnswers: [String!]
+}
+
+input UpdateAnswerInput {
+  id: String!
+  answer: String!
+  correct: Boolean
+  number: Int
+  questionId: String
+}
+
+input CreateQuizInput {
+  name: String!
+  questions: [CreateQuestionInput!]!
+}
+
+input UpdateQuizInput {
+  id: String!
+  name: String!
+}
