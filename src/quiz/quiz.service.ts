@@ -67,10 +67,6 @@ export class QuizService {
     if (!quizToRemove) {
       throw new NotFoundException(`Quiz with id ${id} not found`);
     }
-    const questionsToRemove = quizToRemove.questions;
-    for (let question of questionsToRemove) {
-      await this.questionService.remove(question.id);
-    }
     await this.quizRepository.remove(quizToRemove);
     quizToRemove.id = id;
     return quizToRemove;

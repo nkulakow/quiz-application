@@ -224,8 +224,6 @@ export class QuestionService {
     if (!questionToRemove) {
       throw new NotFoundException(`Question with id ${id} not found`);
     }
-    const answersToRemove = questionToRemove.answers;
-    await this.answerRepository.remove(answersToRemove);
     await this.questionRepository.remove(questionToRemove);
     questionToRemove.id = id;
     return questionToRemove;

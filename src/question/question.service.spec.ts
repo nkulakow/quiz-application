@@ -805,7 +805,6 @@ describe("QuestionService", () => {
     const questionRemoved = await service.remove("custom-question-id");
     expect(questionRemoved.question).toEqual(createQuestionInput.question);
     expect(questionRepositoryMock.entities).toHaveLength(0);
-    expect(answerRepositoryMock.entities).toHaveLength(0);
   });
 
   it("answer for a single answer question should be correct", async () => {
