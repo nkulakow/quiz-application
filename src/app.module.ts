@@ -12,6 +12,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import dbConfig from "src/config/db.config";
 import { DataSource } from "typeorm";
 import { addTransactionalDataSource } from "typeorm-transactional";
+import { AnswerSubmitterModule } from './answer-submitter/answer-submitter.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { addTransactionalDataSource } from "typeorm-transactional";
       },
       inject: [ConfigService],
     }),
+    AnswerSubmitterModule,
   ],
   controllers: [AppController],
   providers: [AppService],

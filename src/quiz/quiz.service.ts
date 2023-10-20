@@ -3,13 +3,8 @@ import { CreateQuizInput } from "./dto/create-quiz.input";
 import { UpdateQuizInput } from "./dto/update-quiz.input";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Quiz } from "./entities/quiz.entity";
-import { Question } from "@src/question/entities/question.entity";
 import { Repository } from "typeorm";
 import { QuestionService } from "@src/question/question.service";
-import { GiveAnswerInput } from "@src/question/dto/give-answers.input";
-import { GetResultOutput } from "./dto/get-result.output";
-import { ResultForQuestionOutput } from "@src/question/dto/result-for-question.output";
-import { AnswerForResultOutput } from "@src/answer/dto/answer-for-result.output";
 import { LengthEqualsZeroException } from "@src/exceptions/length-equals-zero-exception";
 import { Transactional } from "typeorm-transactional";
 
@@ -70,72 +65,5 @@ export class QuizService {
     await this.quizRepository.remove(quizToRemove);
     quizToRemove.id = id;
     return quizToRemove;
-  }
-
-  async submitAnswers(id: string, givenAnswers: GiveAnswerInput[]) {
-    let score = 0;
-    let answeredQuestionsIds = [];
-    let getResultOutput = new GetResultOutput(id, 0, []);
-    let quiz = await this.findOne(id);
-    if (!quiz) {
-      throw new NotFoundException(`Quiz with id ${id} not found`);
-    }
-
-    for (let givenAnswer of givenAnswers)
-      await processAnswer(givenAnswer, this.questionService);
-    getResultOutput.score = parseFloat(
-      ((score * 100) / quiz.questions.length).toFixed(2)
-    );
-
-    processUnansweredQuestions(quiz, this.questionService);
-
-    return getResultOutput;
-
-    async function processAnswer(
-      givenAnswer: GiveAnswerInput,
-      questionService: QuestionService
-    ) {
-      const scoreForQuestion = await questionService.checkAnswer(
-        givenAnswer,
-        quiz.id
-      );
-      if (scoreForQuestion.correct) score++;
-      getResultOutput.questions.push(scoreForQuestion);
-      answeredQuestionsIds.push(givenAnswer.questionId);
-    }
-
-    function processUnansweredQuestions(
-      quiz: Quiz,
-      questionService: QuestionService
-    ) {
-      for (let question of quiz.questions) {
-        if (!answeredQuestionsIds.includes(question.id)) {
-          const scoreForQuestion = createScoreForUnansweredQuestion(
-            question,
-            questionService
-          );
-          getResultOutput.questions.push(scoreForQuestion);
-        }
-      }
-    }
-
-    function createScoreForUnansweredQuestion(
-      question: Question,
-      questionService: QuestionService
-    ) {
-      const correctAnswers = questionService.getCorrectAnswers(question);
-      const correctAnswersMapped = correctAnswers.map(
-        (answer) => new AnswerForResultOutput(answer.id, answer.answer)
-      );
-      const scoreForQuestion = new ResultForQuestionOutput(
-        question.id,
-        question.question,
-        false,
-        false,
-        [],
-        correctAnswersMapped
-      );
-      return scoreForQuestion;
-    }
   }
 }
