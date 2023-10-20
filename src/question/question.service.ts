@@ -16,6 +16,7 @@ import { DuplicateAnswerForQuestionException } from "@src/exceptions/duplicate-a
 import { AnswerDoesNotBelongToQuestionException } from "@src/exceptions/answer-does-not-belong-to-question-exception";
 import { QuestionDoesNotBelongToQuizException } from "@src/exceptions/question-does-not-belong-to-quiz-exception";
 import { IncorrectFieldForQuestionException } from "@src/exceptions/incorrect-field-for-question-exception";
+import { Transactional } from "typeorm-transactional";
 
 @Injectable()
 export class QuestionService {
@@ -26,6 +27,7 @@ export class QuestionService {
     private AnswerService: AnswerService
   ) {}
 
+  @Transactional()
   async create(createQuestionInput: CreateQuestionInput) {
     if (createQuestionInput.question.length < 1) {
       throw new LengthEqualsZeroException(`Question cannot be empty`);
@@ -140,6 +142,7 @@ export class QuestionService {
     });
   }
 
+  @Transactional()
   async update(updateQuestionInput: UpdateQuestionInput) {
     const question = await this.findOne(updateQuestionInput.id);
     if (!question) {
@@ -215,6 +218,7 @@ export class QuestionService {
     }
   }
 
+  @Transactional()
   async remove(id: string) {
     let questionToRemove = await this.findOne(id);
     if (!questionToRemove) {

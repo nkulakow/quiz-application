@@ -10,6 +10,8 @@ import { AnswerModule } from "./answer/answer.module";
 import { QuizModule } from "./quiz/quiz.module";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import dbConfig from "src/config/db.config";
+import { DataSource } from "typeorm";
+import { addTransactionalDataSource } from "typeorm-transactional";
 
 @Module({
   imports: [
@@ -30,6 +32,13 @@ import dbConfig from "src/config/db.config";
       useFactory: async (configService: ConfigService) => ({
         ...(await configService.get("database")),
       }),
+      async dataSourceFactory(options) {
+        if (!options) {
+          throw new Error("Invalid options passed");
+        }
+
+        return addTransactionalDataSource(new DataSource(options));
+      },
       inject: [ConfigService],
     }),
   ],

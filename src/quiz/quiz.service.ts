@@ -11,6 +11,7 @@ import { GetResultOutput } from "./dto/get-result.output";
 import { ResultForQuestionOutput } from "@src/question/dto/result-for-question.output";
 import { AnswerForResultOutput } from "@src/answer/dto/answer-for-result.output";
 import { LengthEqualsZeroException } from "@src/exceptions/length-equals-zero-exception";
+import { Transactional } from "typeorm-transactional";
 
 @Injectable()
 export class QuizService {
@@ -19,6 +20,7 @@ export class QuizService {
     private questionService: QuestionService
   ) {}
 
+  @Transactional()
   async create(createQuizInput: CreateQuizInput) {
     if (createQuizInput.name.length < 1) {
       throw new LengthEqualsZeroException(`Quiz name cannot be empty`);
@@ -59,6 +61,7 @@ export class QuizService {
     return this.quizRepository.save(quizToUpdate);
   }
 
+  @Transactional()
   async remove(id: string) {
     let quizToRemove = await this.findOne(id);
     if (!quizToRemove) {
@@ -105,13 +108,13 @@ export class QuizService {
       answeredQuestionsIds.push(givenAnswer.questionId);
     }
 
-    async function processUnansweredQuestions(
+    function processUnansweredQuestions(
       quiz: Quiz,
       questionService: QuestionService
     ) {
       for (let question of quiz.questions) {
         if (!answeredQuestionsIds.includes(question.id)) {
-          const scoreForQuestion = await createScoreForUnansweredQuestion(
+          const scoreForQuestion = createScoreForUnansweredQuestion(
             question,
             questionService
           );
@@ -120,7 +123,7 @@ export class QuizService {
       }
     }
 
-    async function createScoreForUnansweredQuestion(
+    function createScoreForUnansweredQuestion(
       question: Question,
       questionService: QuestionService
     ) {
