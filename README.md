@@ -235,6 +235,7 @@ To see how all the queries and mutations work go to [GraphQl playground](localho
    }
    ```
 10. To submit answers use submitAnswers query, e.g:
+
     ```GraphQL
     query {
       submitAnswers(
@@ -281,14 +282,16 @@ To see how all the queries and mutations work go to [GraphQl playground](localho
       }
     }
     ```
+
     The first id is the id of the quiz.  
-     For answer to be correct you need to fill givenAnswers input:  
-     - give id of 1 correct answer in [] if it is single answer question  
-     - give ids of all correct answers in [] if it is multiple answer question  
-     - give ids of all answers sorted in [] if it is sorting question (e.g. if answer1<answer2 then answer1.id is before answer2.id in submitted array)  
-     - give one answer in [] if it is plain text answer question. Upper letters and double spaces don't matter  
-     You need to remember that answered questions must belong to quiz and answers to theirs questions. Also, ids and answers for plain text answer questions are strings.  
-     You can get overall score and view of which questions were answered correctly and what are correct answers.
+     For answer to be correct you need to fill givenAnswers input:
+
+    - give id of 1 correct answer in [] if it is single answer question
+    - give ids of all correct answers in [] if it is multiple answer question
+    - give ids of all answers sorted in [] if it is sorting question (e.g. if answer1<answer2 then answer1.id is before answer2.id in submitted array)
+    - give one answer in [] if it is plain text answer question. Upper letters and double spaces don't matter  
+      You need to remember that answered questions must belong to quiz and answers to theirs questions. Also, ids and answers for plain text answer questions are strings.  
+      You can get overall score and view of which questions were answered correctly and what are correct answers.
 
 **Notes about fields**
 
@@ -303,7 +306,7 @@ To see how all the queries and mutations work go to [GraphQl playground](localho
 Questions belong to the quiz. Answers, given by teachers, belong to questions.
 
 **Inputs**  
-Given inputs are checked. If program notices an incorrectness, corresponing error is thrown. Custom exceptions are in the folder "src/excpetions/.
+Given inputs are checked. If program notices an incorrectness, custom error is thrown. Custom exception ValidationException is in the folder "src/excpetions/.
 
 **Services**
 

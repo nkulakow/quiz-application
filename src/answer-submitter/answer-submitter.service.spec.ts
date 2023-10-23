@@ -8,7 +8,7 @@ import { AnswerService } from "@src/answer/answer.service";
 import { QuestionService } from "@src/question/question.service";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { GiveAnswerInput } from "@src/question/dto/give-answers.input";
-import { QuestionDoesNotBelongToQuizException } from "@src/exceptions/question-does-not-belong-to-quiz-exception";
+import { ValidationException } from "@src/exceptions/validation-exception";
 
 interface EntityWithId {
   id: string;
@@ -419,7 +419,7 @@ describe("AnswerSubmitterService", () => {
     expect(correctAnswers[0].answer).toEqual("San Salvador");
   });
 
-  it("should throw QuestionDoesNotBelongToQuizException while checking answer", async () => {
+  it("should throw ValidationException while checking answer with question not belonging to quiz", async () => {
     const givenAnswerInput = new GiveAnswerInput("question-1", ["id-Paris"]);
 
     const answers = [
@@ -443,6 +443,6 @@ describe("AnswerSubmitterService", () => {
 
     expect(
       service.checkAnswer(givenAnswerInput, "another-quiz-id")
-    ).rejects.toThrow(QuestionDoesNotBelongToQuizException);
+    ).rejects.toThrow(ValidationException);
   });
 });

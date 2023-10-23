@@ -5,8 +5,8 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Quiz } from "./entities/quiz.entity";
 import { Repository } from "typeorm";
 import { QuestionService } from "@src/question/question.service";
-import { LengthEqualsZeroException } from "@src/exceptions/length-equals-zero-exception";
 import { Transactional } from "typeorm-transactional";
+import { ValidationException } from "@src/exceptions/validation-exception";
 
 @Injectable()
 export class QuizService {
@@ -18,7 +18,7 @@ export class QuizService {
   @Transactional()
   async create(createQuizInput: CreateQuizInput) {
     if (createQuizInput.name.length < 1) {
-      throw new LengthEqualsZeroException(`Quiz name cannot be empty`);
+      throw new ValidationException(`Quiz name cannot be empty`);
     }
     let quizToCreate = this.quizRepository.create(createQuizInput);
     let createdQuiz = await this.quizRepository.save(quizToCreate);

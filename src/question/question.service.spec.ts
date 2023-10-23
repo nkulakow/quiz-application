@@ -7,13 +7,8 @@ import { CreateQuestionInput } from "../../src/question/dto/create-question.inpu
 import { CreateAnswerInput } from "../../src/answer/dto/create-answer.input";
 import { UpdateQuestionInput } from "../../src/question/dto/update-question.input";
 import { UpdateAnswerInput } from "../../src/answer/dto/update-answer.input";
-import { GiveAnswerInput } from "./dto/give-answers.input";
 import { AnswerService } from "@src/answer/answer.service";
-import { AnswerDoesNotBelongToQuestionException } from "@src/exceptions/answer-does-not-belong-to-question-exception";
-import { LengthEqualsZeroException } from "@src/exceptions/length-equals-zero-exception";
-import { DuplicateAnswerForQuestionException } from "@src/exceptions/duplicate-answer-for-question-exception";
-import { IncorrectFieldForQuestionException } from "@src/exceptions/incorrect-field-for-question-exception";
-import { QuestionDoesNotBelongToQuizException } from "@src/exceptions/question-does-not-belong-to-quiz-exception";
+import { ValidationException } from "@src/exceptions/validation-exception";
 
 interface EntityWithId {
   id: string;
@@ -137,7 +132,7 @@ describe("QuestionService", () => {
     }
   });
 
-  it("should throw LengthEqualsZeroException while creating the question", async () => {
+  it("should throw ValidationException while creating the question with question length = 0", async () => {
     const answersInput = [
       new CreateAnswerInput("Paris", true, null),
       new CreateAnswerInput("London", false, null),
@@ -152,11 +147,11 @@ describe("QuestionService", () => {
     );
 
     expect(service.create(createQuestionInput)).rejects.toThrow(
-      LengthEqualsZeroException
+      ValidationException
     );
   });
 
-  it("should throw IncorrectFieldForQuestionException while creating the question", async () => {
+  it("should throw ValidationException while creating the question with incorrect field", async () => {
     const createQuestionInput1 = new CreateQuestionInput(
       "Question",
       true,
@@ -214,23 +209,23 @@ describe("QuestionService", () => {
     );
 
     expect(service.create(createQuestionInput1)).rejects.toThrow(
-      IncorrectFieldForQuestionException
+      ValidationException
     );
     expect(service.create(createQuestionInput2)).rejects.toThrow(
-      IncorrectFieldForQuestionException
+      ValidationException
     );
     expect(service.create(createQuestionInput3)).rejects.toThrow(
-      IncorrectFieldForQuestionException
+      ValidationException
     );
     expect(service.create(createQuestionInput4)).rejects.toThrow(
-      IncorrectFieldForQuestionException
+      ValidationException
     );
     expect(service.create(createQuestionInput5)).rejects.toThrow(
-      IncorrectFieldForQuestionException
+      ValidationException
     );
   });
 
-  it("should throw DuplicateAnswerForQuestionException while creating the question", async () => {
+  it("should throw ValidationException while creating the question with duplicate answer", async () => {
     const answersInput = [
       new CreateAnswerInput("Paris", true, null),
       new CreateAnswerInput("Paris", false, null),
@@ -270,7 +265,7 @@ describe("QuestionService", () => {
       .mockImplementation((answer) => answer);
 
     expect(service.create(createQuestionInput)).rejects.toThrow(
-      DuplicateAnswerForQuestionException
+      ValidationException
     );
   });
 
@@ -346,7 +341,7 @@ describe("QuestionService", () => {
     expect(updatedQuestion.singleAnswer).toEqual(true);
   });
 
-  it("should throw an AnswerDoesNotBelongToQuestionException when updating a question with an answer that does not belong to it", async () => {
+  it("should throw an ValidationException when updating a question with an answer that does not belong to it", async () => {
     answerRepositoryMock.entities = [];
     questionRepositoryMock.entities = [];
 
@@ -450,14 +445,14 @@ describe("QuestionService", () => {
 
     await service.create(createQuestionInput);
     expect(service.update(updateQuestionInput)).rejects.toThrow(
-      AnswerDoesNotBelongToQuestionException
+      ValidationException
     );
     expect(service.update(updateQuestionInput2)).rejects.toThrow(
-      AnswerDoesNotBelongToQuestionException
+      ValidationException
     );
   });
 
-  it("should throw an DuplicateAnswerForQuestionException when updating a question", async () => {
+  it("should throw an ValidationException when updating a question with duplicate answer", async () => {
     answerRepositoryMock.entities = [];
     questionRepositoryMock.entities = [];
 
@@ -546,7 +541,7 @@ describe("QuestionService", () => {
 
     await service.create(createQuestionInput);
     expect(service.update(updateQuestionInput)).rejects.toThrow(
-      DuplicateAnswerForQuestionException
+      ValidationException
     );
   });
 

@@ -8,11 +8,8 @@ import { Answer } from "@src/answer/entities/answer.entity";
 import { AnswerService } from "@src/answer/answer.service";
 import { UpdateAnswerInput } from "@src/answer/dto/update-answer.input";
 import { CreateAnswerInput } from "@src/answer/dto/create-answer.input";
-import { LengthEqualsZeroException } from "@src/exceptions/length-equals-zero-exception";
-import { DuplicateAnswerForQuestionException } from "@src/exceptions/duplicate-answer-for-question-exception";
-import { AnswerDoesNotBelongToQuestionException } from "@src/exceptions/answer-does-not-belong-to-question-exception";
-import { IncorrectFieldForQuestionException } from "@src/exceptions/incorrect-field-for-question-exception";
 import { Transactional } from "typeorm-transactional";
+import { ValidationException } from "@src/exceptions/validation-exception";
 
 @Injectable()
 export class QuestionService {
@@ -26,7 +23,7 @@ export class QuestionService {
   @Transactional()
   async create(createQuestionInput: CreateQuestionInput) {
     if (createQuestionInput.question.length < 1) {
-      throw new LengthEqualsZeroException(`Question cannot be empty`);
+      throw new ValidationException(`Question cannot be empty`);
     }
     this.checkFieldsCorrespondsToQuestionType(createQuestionInput);
     let questionToCreate = this.questionRepository.create(createQuestionInput);
@@ -69,12 +66,12 @@ export class QuestionService {
     const checkedAnswers = new Set();
     for (let answerInput of answersInput) {
       if (savedAnswers.find((answer) => answer.answer === answerInput.answer)) {
-        throw new DuplicateAnswerForQuestionException(
+        throw new ValidationException(
           `Answer ${answerInput.answer} already exists for question ${question}`
         );
       }
       if (checkedAnswers.has(answerInput.answer)) {
-        throw new DuplicateAnswerForQuestionException(
+        throw new ValidationException(
           `Gave ${answerInput.answer} 2 times for question ${question}`
         );
       }
@@ -92,13 +89,13 @@ export class QuestionService {
       createQuestionInput.plainText,
     ];
     if (typesBoleean.filter(Boolean).length !== 1) {
-      throw new IncorrectFieldForQuestionException(
+      throw new ValidationException(
         `Only one type of question can be true for question: ${createQuestionInput.question}`
       );
     }
     for (let answer of createQuestionInput.answers) {
       if (createQuestionInput.sorting && !answer.number) {
-        throw new IncorrectFieldForQuestionException(
+        throw new ValidationException(
           `Field number is required for answer: ${answer.answer} for sorting question: ${createQuestionInput.question}`
         );
       }
@@ -107,7 +104,7 @@ export class QuestionService {
           createQuestionInput.multipleAnswer) &&
         answer.correct == null
       ) {
-        throw new IncorrectFieldForQuestionException(
+        throw new ValidationException(
           `Field correct is required for answer: ${answer.answer} for single/multiple answers question: ${createQuestionInput.question}`
         );
       }
@@ -116,7 +113,7 @@ export class QuestionService {
       createQuestionInput.plainText &&
       createQuestionInput.answers.length !== 1
     ) {
-      throw new IncorrectFieldForQuestionException(
+      throw new ValidationException(
         `Only one answer is allowed for plain text question: ${createQuestionInput.question}`
       );
     }
@@ -125,7 +122,7 @@ export class QuestionService {
       createQuestionInput.answers.filter((answer) => answer.correct).length !==
         1
     ) {
-      throw new IncorrectFieldForQuestionException(
+      throw new ValidationException(
         `Only one correct answer is allowed for single answer question: ${createQuestionInput.question}`
       );
     }
@@ -184,7 +181,7 @@ export class QuestionService {
     for (let answerInput of updateAnswersInput) {
       let updatedAnswer = await this.AnswerService.findOne(answerInput.id);
       if (updatedAnswer.questionId !== questionId) {
-        throw new AnswerDoesNotBelongToQuestionException(
+        throw new ValidationException(
           `Answer with ID ${answerInput.id} does not belong to question with ID ${questionId}`
         );
       }
@@ -202,7 +199,7 @@ export class QuestionService {
     let question = await this.findOne(questionId);
     for (let answerId of deleteAnswersInput) {
       if (!question.answers.find((answer) => answer.id === answerId)) {
-        throw new AnswerDoesNotBelongToQuestionException(
+        throw new ValidationException(
           `Answer with ID ${answerId} does not belong to question with ID ${questionId}`
         );
       }

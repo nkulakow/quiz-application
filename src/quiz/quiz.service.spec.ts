@@ -8,11 +8,10 @@ import { CreateQuizInput } from "./dto/create-quiz.input";
 import { CreateQuestionInput } from "@src/question/dto/create-question.input";
 import { CreateAnswerInput } from "@src/answer/dto/create-answer.input";
 import { UpdateQuizInput } from "./dto/update-quiz.input";
-import { GiveAnswerInput } from "@src/question/dto/give-answers.input";
 import { QuestionService } from "@src/question/question.service";
 import { AnswerService } from "@src/answer/answer.service";
-import { LengthEqualsZeroException } from "@src/exceptions/length-equals-zero-exception";
 import { NotFoundException } from "@nestjs/common";
+import { ValidationException } from "@src/exceptions/validation-exception";
 
 interface EntityWithId {
   id: string;
@@ -78,11 +77,9 @@ describe("QuizService", () => {
     expect(createdQuiz.questions).toEqual([]);
   });
 
-  it("should throw LengthEqualsZeroException while creating a quiz", async () => {
+  it("should throw ValidationException while creating a quiz with name length = 0", async () => {
     const badQuizInput = new CreateQuizInput("", []);
-    expect(service.create(badQuizInput)).rejects.toThrow(
-      LengthEqualsZeroException
-    );
+    expect(service.create(badQuizInput)).rejects.toThrow(ValidationException);
   });
 
   it("should create a quiz with a question", async () => {

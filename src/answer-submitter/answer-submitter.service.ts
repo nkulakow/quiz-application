@@ -7,9 +7,8 @@ import { AnswerForResultOutput } from "@src/answer/dto/answer-for-result.output"
 import { Question } from "@src/question/entities/question.entity";
 import { QuestionService } from "@src/question/question.service";
 import { QuizService } from "@src/quiz/quiz.service";
-import { QuestionDoesNotBelongToQuizException } from "@src/exceptions/question-does-not-belong-to-quiz-exception";
-import { AnswerDoesNotBelongToQuestionException } from "@src/exceptions/answer-does-not-belong-to-question-exception";
 import { Answer } from "@src/answer/entities/answer.entity";
+import { ValidationException } from "@src/exceptions/validation-exception";
 
 @Injectable()
 export class AnswerSubmitterService {
@@ -66,7 +65,7 @@ export class AnswerSubmitterService {
       );
     }
     if (question.quizId !== quizId) {
-      throw new QuestionDoesNotBelongToQuizException(
+      throw new ValidationException(
         `Question with id ${givenAnswer.questionId} does not belong to quiz with id ${quizId}`
       );
     }
@@ -75,7 +74,7 @@ export class AnswerSubmitterService {
     }
     for (let answerId of givenAnswer.answers) {
       if (!question.answers.find((answer) => answer.id === answerId)) {
-        throw new AnswerDoesNotBelongToQuestionException(
+        throw new ValidationException(
           `Answer with id ${answerId} does not belong to question with id ${givenAnswer.questionId}`
         );
       }
