@@ -10,6 +10,7 @@ import { UpdateAnswerInput } from "@src/answer/dto/update-answer.input";
 import { CreateAnswerInput } from "@src/answer/dto/create-answer.input";
 import { Transactional } from "typeorm-transactional";
 import { ValidationException } from "@src/exceptions/validation-exception";
+import { validate } from "class-validator";
 
 @Injectable()
 export class QuestionService {
@@ -22,8 +23,12 @@ export class QuestionService {
 
   @Transactional()
   async create(createQuestionInput: CreateQuestionInput) {
-    if (createQuestionInput.question.length < 1) {
-      throw new ValidationException(`Question cannot be empty`);
+    const errors = await validate(createQuestionInput);
+    if (errors.length > 0) {
+      throw new ValidationException(
+        "Validation failed" +
+          errors.map((error) => error.constraints).join(", ")
+      );
     }
     this.checkFieldsCorrespondsToQuestionType(createQuestionInput);
     let questionToCreate = this.questionRepository.create(createQuestionInput);
@@ -137,6 +142,13 @@ export class QuestionService {
 
   @Transactional()
   async update(updateQuestionInput: UpdateQuestionInput) {
+    const errors = await validate(updateQuestionInput);
+    if (errors.length > 0) {
+      throw new ValidationException(
+        "Validation failed" +
+          errors.map((error) => error.constraints).join(", ")
+      );
+    }
     const question = await this.findOne(updateQuestionInput.id);
     if (!question) {
       throw new NotFoundException(

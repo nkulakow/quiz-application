@@ -1,4 +1,11 @@
 import { InputType, Field, Int } from "@nestjs/graphql";
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from "class-validator";
 
 @InputType()
 export class UpdateAnswerInput {
@@ -17,12 +24,23 @@ export class UpdateAnswerInput {
   }
 
   @Field()
+  @IsString()
+  @IsNotEmpty()
   id: string;
+
   @Field()
+  @IsString()
+  @IsNotEmpty()
   answer: string;
+
   @Field({ nullable: true })
+  @IsBoolean()
+  @IsOptional()
   correct: boolean;
+
   @Field(() => Int, { nullable: true })
+  @IsNumber()
+  @IsOptional()
   number: number;
 
   @Field({ nullable: true })

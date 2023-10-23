@@ -7,6 +7,7 @@ import { Repository } from "typeorm";
 import { QuestionService } from "@src/question/question.service";
 import { Transactional } from "typeorm-transactional";
 import { ValidationException } from "@src/exceptions/validation-exception";
+import { validate } from "class-validator";
 
 @Injectable()
 export class QuizService {
@@ -17,8 +18,12 @@ export class QuizService {
 
   @Transactional()
   async create(createQuizInput: CreateQuizInput) {
-    if (createQuizInput.name.length < 1) {
-      throw new ValidationException(`Quiz name cannot be empty`);
+    const errors = await validate(createQuizInput);
+    if (errors.length > 0) {
+      throw new ValidationException(
+        "Validation failed" +
+          errors.map((error) => error.constraints).join(", ")
+      );
     }
     let quizToCreate = this.quizRepository.create(createQuizInput);
     let createdQuiz = await this.quizRepository.save(quizToCreate);
@@ -46,7 +51,15 @@ export class QuizService {
     });
   }
 
-  update(updateQuizInput: UpdateQuizInput) {
+  @Transactional()
+  async update(updateQuizInput: UpdateQuizInput) {
+    const errors = await validate(updateQuizInput);
+    if (errors.length > 0) {
+      throw new ValidationException(
+        "Validation failed" +
+          errors.map((error) => error.constraints).join(", ")
+      );
+    }
     if (!this.findOne(updateQuizInput.id)) {
       throw new NotFoundException(
         `Quiz with id ${updateQuizInput.id} not found`

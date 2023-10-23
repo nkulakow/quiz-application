@@ -1,5 +1,13 @@
 import { InputType, Field } from "@nestjs/graphql";
 import { CreateAnswerInput } from "@ent/answer/dto/create-answer.input";
+import {
+  IsNotEmpty,
+  IsBoolean,
+  IsString,
+  IsArray,
+  IsOptional,
+  ValidateNested,
+} from "class-validator";
 
 @InputType()
 export class CreateQuestionInput {
@@ -22,19 +30,38 @@ export class CreateQuestionInput {
   }
 
   @Field()
+  @IsNotEmpty()
+  @IsString()
   question: string;
+
   @Field({ nullable: true })
+  @IsBoolean()
+  @IsOptional()
   singleAnswer: boolean;
+
   @Field({ nullable: true })
+  @IsBoolean()
+  @IsOptional()
   multipleAnswer: boolean;
+
   @Field({ nullable: true })
+  @IsBoolean()
+  @IsOptional()
   sorting: boolean;
+
   @Field({ nullable: true })
+  @IsBoolean()
+  @IsOptional()
   plainText: boolean;
 
   @Field(() => [CreateAnswerInput])
+  @IsArray()
+  @ValidateNested({ each: true })
+  @IsOptional()
   answers: CreateAnswerInput[];
 
   @Field({ nullable: true })
+  @IsString()
+  @IsOptional()
   quizId: string;
 }

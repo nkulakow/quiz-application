@@ -4,7 +4,6 @@ import { UpdateAnswerInput } from "./dto/update-answer.input";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Answer } from "./entities/answer.entity";
-import { ValidationException } from "@src/exceptions/validation-exception";
 
 @Injectable()
 export class AnswerService {
@@ -13,9 +12,6 @@ export class AnswerService {
   ) {}
 
   create(createAnswerInput: CreateAnswerInput) {
-    if (createAnswerInput.answer.length < 1) {
-      throw new ValidationException(`Answer cannot be empty`);
-    }
     let answerToCreate = this.answerRepository.create(createAnswerInput);
     return this.answerRepository.save(answerToCreate);
   }
