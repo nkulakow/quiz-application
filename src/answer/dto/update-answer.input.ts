@@ -1,11 +1,5 @@
 import { InputType, Field, Int } from "@nestjs/graphql";
-import {
-  IsBoolean,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from "class-validator";
+const Joi = require("joi");
 
 @InputType()
 export class UpdateAnswerInput {
@@ -24,25 +18,25 @@ export class UpdateAnswerInput {
   }
 
   @Field()
-  @IsString()
-  @IsNotEmpty()
   id: string;
 
   @Field()
-  @IsString()
-  @IsNotEmpty()
   answer: string;
 
   @Field({ nullable: true })
-  @IsBoolean()
-  @IsOptional()
   correct: boolean;
 
   @Field(() => Int, { nullable: true })
-  @IsNumber()
-  @IsOptional()
   number: number;
 
   @Field({ nullable: true })
   questionId: string;
 }
+
+export const updateAnswerSchema = Joi.object({
+  id: Joi.string().required(),
+  answer: Joi.string().required(),
+  correct: Joi.boolean().allow(null),
+  number: Joi.number().allow(null),
+  questionId: Joi.string(),
+});

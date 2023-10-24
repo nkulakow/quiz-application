@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { Quiz } from "../quiz/entities/quiz.entity";
-import { GiveAnswerInput } from "@src/question/dto/give-answers.input";
+import {
+  GiveAnswerInput,
+  giveAnswerSchema,
+} from "@src/question/dto/give-answers.input";
 import { GetResultOutput } from "./dto/get-result.output";
 import { ResultForQuestionOutput } from "@src/question/dto/result-for-question.output";
 import { AnswerForResultOutput } from "@src/answer/dto/answer-for-result.output";
@@ -16,6 +19,7 @@ export class AnswerSubmitterService {
     private questionService: QuestionService,
     private quizService: QuizService
   ) {}
+
   async submitAnswers(id: string, givenAnswers: GiveAnswerInput[]) {
     let score = 0;
     let answeredQuestionsIds = [];
@@ -26,6 +30,13 @@ export class AnswerSubmitterService {
     }
 
     for (let givenAnswer of givenAnswers) {
+      const { error, value } = giveAnswerSchema.validate(givenAnswer);
+      if (error) {
+        throw new ValidationException(
+          "Validation failed: " +
+            error.details.map((detail) => detail.message).join(", ")
+        );
+      }
       const scoreForQuestion = await this.checkAnswer(givenAnswer, quiz.id);
       if (scoreForQuestion.correct) score++;
       getResultOutput.questions.push(scoreForQuestion);

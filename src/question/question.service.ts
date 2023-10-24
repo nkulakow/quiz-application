@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { CreateQuestionInput } from "./dto/create-question.input";
-import { UpdateQuestionInput } from "./dto/update-question.input";
+import {
+  UpdateQuestionInput,
+  updateQuestionSchema,
+} from "./dto/update-question.input";
 import { Question } from "./entities/question.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -10,7 +13,7 @@ import { UpdateAnswerInput } from "@src/answer/dto/update-answer.input";
 import { CreateAnswerInput } from "@src/answer/dto/create-answer.input";
 import { Transactional } from "typeorm-transactional";
 import { ValidationException } from "@src/exceptions/validation-exception";
-import { validate } from "class-validator";
+import { createQuestionSchema } from "./dto/create-question.input";
 
 @Injectable()
 export class QuestionService {
@@ -23,14 +26,15 @@ export class QuestionService {
 
   @Transactional()
   async create(createQuestionInput: CreateQuestionInput) {
-    const errors = await validate(createQuestionInput);
-    if (errors.length > 0) {
+    const { error, value } = createQuestionSchema.validate(createQuestionInput);
+    if (error) {
       throw new ValidationException(
-        "Validation failed" +
-          errors.map((error) => error.constraints).join(", ")
+        "Validation failed: " +
+          error.details.map((detail) => detail.message).join(", ")
       );
     }
     this.checkFieldsCorrespondsToQuestionType(createQuestionInput);
+
     let questionToCreate = this.questionRepository.create(createQuestionInput);
     let answersInput = createQuestionInput.answers;
     try {
@@ -142,13 +146,14 @@ export class QuestionService {
 
   @Transactional()
   async update(updateQuestionInput: UpdateQuestionInput) {
-    const errors = await validate(updateQuestionInput);
-    if (errors.length > 0) {
+    const { error, value } = updateQuestionSchema.validate(updateQuestionInput);
+    if (error) {
       throw new ValidationException(
-        "Validation failed" +
-          errors.map((error) => error.constraints).join(", ")
+        "Validation failed: " +
+          error.details.map((detail) => detail.message).join(", ")
       );
     }
+
     const question = await this.findOne(updateQuestionInput.id);
     if (!question) {
       throw new NotFoundException(

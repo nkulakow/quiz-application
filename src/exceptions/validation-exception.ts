@@ -1,6 +1,6 @@
 export class ValidationException extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "AnswerDoesNotBelongToQuestionException";
+    this.name = "ValidationException";
   }
 }

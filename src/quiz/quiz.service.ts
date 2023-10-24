@@ -1,13 +1,12 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { CreateQuizInput } from "./dto/create-quiz.input";
-import { UpdateQuizInput } from "./dto/update-quiz.input";
+import { CreateQuizInput, createQuizSchema } from "./dto/create-quiz.input";
+import { UpdateQuizInput, updateQuizSchema } from "./dto/update-quiz.input";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Quiz } from "./entities/quiz.entity";
 import { Repository } from "typeorm";
 import { QuestionService } from "@src/question/question.service";
 import { Transactional } from "typeorm-transactional";
 import { ValidationException } from "@src/exceptions/validation-exception";
-import { validate } from "class-validator";
 
 @Injectable()
 export class QuizService {
@@ -18,11 +17,11 @@ export class QuizService {
 
   @Transactional()
   async create(createQuizInput: CreateQuizInput) {
-    const errors = await validate(createQuizInput);
-    if (errors.length > 0) {
+    const { error, value } = createQuizSchema.validate(createQuizInput);
+    if (error) {
       throw new ValidationException(
-        "Validation failed" +
-          errors.map((error) => error.constraints).join(", ")
+        "Validation failed: " +
+          error.details.map((detail) => detail.message).join(", ")
       );
     }
     let quizToCreate = this.quizRepository.create(createQuizInput);
@@ -53,13 +52,14 @@ export class QuizService {
 
   @Transactional()
   async update(updateQuizInput: UpdateQuizInput) {
-    const errors = await validate(updateQuizInput);
-    if (errors.length > 0) {
+    const { error, value } = updateQuizSchema.validate(updateQuizInput);
+    if (error) {
       throw new ValidationException(
-        "Validation failed" +
-          errors.map((error) => error.constraints).join(", ")
+        "Validation failed: " +
+          error.details.map((detail) => detail.message).join(", ")
       );
     }
+
     if (!this.findOne(updateQuizInput.id)) {
       throw new NotFoundException(
         `Quiz with id ${updateQuizInput.id} not found`

@@ -1,6 +1,9 @@
 import { InputType, Field } from "@nestjs/graphql";
-import { CreateQuestionInput } from "@ent/question/dto/create-question.input";
-import { IsNotEmpty, IsString, ValidateNested } from "class-validator";
+import {
+  CreateQuestionInput,
+  createQuestionSchema,
+} from "@ent/question/dto/create-question.input";
+const Joi = require("joi");
 
 @InputType()
 export class CreateQuizInput {
@@ -10,12 +13,13 @@ export class CreateQuizInput {
   }
 
   @Field()
-  @IsNotEmpty()
-  @IsString()
   name: string;
 
   @Field(() => [CreateQuestionInput])
-  @IsNotEmpty()
-  @ValidateNested({ each: true })
   questions: CreateQuestionInput[];
 }
+
+export const createQuizSchema = Joi.object({
+  name: Joi.string().required(),
+  questions: Joi.array().items(createQuestionSchema),
+});

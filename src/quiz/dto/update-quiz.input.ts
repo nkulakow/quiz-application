@@ -1,5 +1,5 @@
 import { InputType, Field } from "@nestjs/graphql";
-import { IsNotEmpty, IsString } from "class-validator";
+const Joi = require("joi");
 
 @InputType()
 export class UpdateQuizInput {
@@ -8,12 +8,13 @@ export class UpdateQuizInput {
     this.name = name;
   }
   @Field()
-  @IsNotEmpty()
-  @IsString()
   id: string;
 
   @Field()
-  @IsNotEmpty()
-  @IsString()
   name: string;
 }
+
+export const updateQuizSchema = Joi.object({
+  id: Joi.string().required(),
+  name: Joi.string().required(),
+});

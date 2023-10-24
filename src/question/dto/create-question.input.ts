@@ -1,13 +1,9 @@
 import { InputType, Field } from "@nestjs/graphql";
-import { CreateAnswerInput } from "@ent/answer/dto/create-answer.input";
 import {
-  IsNotEmpty,
-  IsBoolean,
-  IsString,
-  IsArray,
-  IsOptional,
-  ValidateNested,
-} from "class-validator";
+  CreateAnswerInput,
+  createAnswerSchema,
+} from "@ent/answer/dto/create-answer.input";
+const Joi = require("joi");
 
 @InputType()
 export class CreateQuestionInput {
@@ -30,38 +26,33 @@ export class CreateQuestionInput {
   }
 
   @Field()
-  @IsNotEmpty()
-  @IsString()
   question: string;
 
   @Field({ nullable: true })
-  @IsBoolean()
-  @IsOptional()
   singleAnswer: boolean;
 
   @Field({ nullable: true })
-  @IsBoolean()
-  @IsOptional()
   multipleAnswer: boolean;
 
   @Field({ nullable: true })
-  @IsBoolean()
-  @IsOptional()
   sorting: boolean;
 
   @Field({ nullable: true })
-  @IsBoolean()
-  @IsOptional()
   plainText: boolean;
 
   @Field(() => [CreateAnswerInput])
-  @IsArray()
-  @ValidateNested({ each: true })
-  @IsOptional()
   answers: CreateAnswerInput[];
 
   @Field({ nullable: true })
-  @IsString()
-  @IsOptional()
   quizId: string;
 }
+
+export const createQuestionSchema = Joi.object({
+  question: Joi.string().required(),
+  singleAnswer: Joi.boolean().allow(null),
+  multipleAnswer: Joi.boolean().allow(null),
+  sorting: Joi.boolean().allow(null),
+  plainText: Joi.boolean().allow(null),
+  answers: Joi.array().items(createAnswerSchema),
+  quizId: Joi.string(),
+});
