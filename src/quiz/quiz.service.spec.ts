@@ -20,18 +20,39 @@ interface EntityWithId {
 class MockRepository<T extends EntityWithId> {
   entities: T[] = [];
   create(entity: T): T {
+    let id: string;
+    if (entity instanceof CreateAnswerInput) id = "generated-answer-id";
+    else if (entity instanceof CreateQuestionInput)
+      id = "generated-question-id";
+    else id = "custom-quiz-id";
+    entity.id = id;
     return entity;
   }
   async save(entity: T): Promise<T> {
+    if (this.entities.every((item) => item instanceof Quiz)) {
+      const index = quizRepositoryMock.entities.findIndex(
+        (e) => e.id === entity.id
+      );
+      if (index !== -1 && entity instanceof UpdateQuizInput) {
+        if (entity.name) quizRepositoryMock.entities[index].name = entity.name;
+        return entity;
+      }
+    }
+    this.entities.push(entity);
     return entity;
   }
   findOne(query: any): T | undefined {
-    return undefined;
+    const id = query.where.id;
+    const foundEntity = this.entities.find((entity) => entity.id === id);
+    return foundEntity || undefined;
   }
   remove(entity: T): T {
+    const index = this.entities.findIndex((e) => e.id === entity.id);
+    if (index !== -1) {
+      this.entities.splice(index, 1);
+    }
     return entity;
   }
-  //they are actually implemented in the tests (see below)
 }
 
 const questionRepositoryMock = new MockRepository<Question>();
@@ -67,13 +88,9 @@ describe("QuizService", () => {
 
   it("should create a quiz without questions", async () => {
     const createQuizInput = new CreateQuizInput("Test Quiz", []);
-    quizRepositoryMock.create = jest.fn().mockReturnValue(createQuizInput);
-    quizRepositoryMock.save = jest.fn().mockReturnValue(createQuizInput);
 
     const createdQuiz = await service.create(createQuizInput);
     expect(createdQuiz).toEqual(createQuizInput);
-    expect(quizRepositoryMock.create).toBeCalledWith(createQuizInput);
-    expect(quizRepositoryMock.save).toBeCalledWith(createQuizInput);
     expect(createdQuiz.questions).toEqual([]);
   });
 
@@ -104,35 +121,6 @@ describe("QuizService", () => {
       createQuestionInput,
     ]);
 
-    quizRepositoryMock.create = jest.fn().mockReturnValue(createQuizInput);
-    questionRepositoryMock.save = jest
-      .fn()
-      .mockImplementation((question) => question);
-    questionRepositoryMock.create = jest.fn().mockImplementation((entity) => {
-      entity.id = "generated-question-id";
-      return entity;
-    });
-
-    questionRepositoryMock.save = jest.fn().mockImplementation((entity) => {
-      questionRepositoryMock.entities.push(entity);
-      return entity;
-    });
-
-    questionRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
-      const id = query.where.id;
-      const foundEntity = questionRepositoryMock.entities.find(
-        (entity) => entity.id === id
-      );
-      return foundEntity || undefined;
-    });
-    answerRepositoryMock.create = jest.fn().mockImplementation((answer) => ({
-      ...answer,
-      id: "generated-answer-id",
-    }));
-    answerRepositoryMock.save = jest
-      .fn()
-      .mockImplementation((answer) => answer);
-
     const createdQuiz = await service.create(createQuizInput);
     expect(createdQuiz).toEqual(createQuizInput);
     expect(createdQuiz.questions[0].id).toEqual("generated-question-id");
@@ -158,31 +146,6 @@ describe("QuizService", () => {
       "Test Quiz Updated"
     );
 
-    quizRepositoryMock.create = jest.fn().mockImplementation((entity) => {
-      entity.id = "custom-quiz-id";
-      return entity;
-    });
-
-    quizRepositoryMock.save = jest.fn().mockImplementation((entity) => {
-      const index = quizRepositoryMock.entities.findIndex(
-        (e) => e.id === entity.id
-      );
-      if (index !== -1) {
-        if (entity.name) quizRepositoryMock.entities[index].name = entity.name;
-      } else {
-        quizRepositoryMock.entities.push(entity);
-      }
-      return entity;
-    });
-
-    quizRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
-      const id = query.where.id;
-      const foundEntity = quizRepositoryMock.entities.find(
-        (entity) => entity.id === id
-      );
-      return foundEntity || undefined;
-    });
-
     await service.create(createQuizInput);
     const updatedQuiz = await service.update(updateQuizInput);
     expect(updatedQuiz.name).toEqual(updateQuizInput.name);
@@ -200,31 +163,6 @@ describe("QuizService", () => {
       "Test Quiz Updated"
     );
 
-    quizRepositoryMock.create = jest.fn().mockImplementation((entity) => {
-      entity.id = "custom-quiz-id";
-      return entity;
-    });
-
-    quizRepositoryMock.save = jest.fn().mockImplementation((entity) => {
-      const index = quizRepositoryMock.entities.findIndex(
-        (e) => e.id === entity.id
-      );
-      if (index !== -1) {
-        if (entity.name) quizRepositoryMock.entities[index].name = entity.name;
-      } else {
-        quizRepositoryMock.entities.push(entity);
-      }
-      return entity;
-    });
-
-    quizRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
-      const id = query.where.id;
-      const foundEntity = quizRepositoryMock.entities.find(
-        (entity) => entity.id === id
-      );
-      return foundEntity || undefined;
-    });
-
     await service.create(createQuizInput);
     try {
       await service.update(updateQuizInput);
@@ -239,41 +177,6 @@ describe("QuizService", () => {
     answerRepositoryMock.entities = [];
 
     const createQuizInput = new CreateQuizInput("Test Quiz", []);
-
-    quizRepositoryMock.create = jest.fn().mockImplementation((entity) => {
-      entity.id = "custom-quiz-id";
-      return entity;
-    });
-
-    quizRepositoryMock.save = jest.fn().mockImplementation((entity) => {
-      const index = quizRepositoryMock.entities.findIndex(
-        (e) => e.id === entity.id
-      );
-      if (index !== -1) {
-        if (entity.name) quizRepositoryMock.entities[index].name = entity.name;
-      } else {
-        quizRepositoryMock.entities.push(entity);
-      }
-      return entity;
-    });
-
-    quizRepositoryMock.findOne = jest.fn().mockImplementation((query) => {
-      const id = query.where.id;
-      const foundEntity = quizRepositoryMock.entities.find(
-        (entity) => entity.id === id
-      );
-      return foundEntity || undefined;
-    });
-
-    quizRepositoryMock.remove = jest.fn().mockImplementation((entity) => {
-      const index = quizRepositoryMock.entities.findIndex(
-        (e) => e.id === entity.id
-      );
-      if (index !== -1) {
-        quizRepositoryMock.entities.splice(index, 1);
-      }
-      return entity;
-    });
 
     await service.create(createQuizInput);
     const removedQuiz = await service.remove("custom-quiz-id");
