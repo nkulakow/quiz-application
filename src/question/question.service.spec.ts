@@ -9,6 +9,7 @@ import { UpdateQuestionInput } from "../../src/question/dto/update-question.inpu
 import { UpdateAnswerInput } from "../../src/answer/dto/update-answer.input";
 import { AnswerService } from "@src/answer/answer.service";
 import { ValidationException } from "@src/exceptions/validation-exception";
+import { NotFoundException } from "@nestjs/common";
 
 interface EntityWithId {
   id: string;
@@ -19,27 +20,20 @@ class MockRepository<T extends EntityWithId> {
   create(entity: T): T {
     let id: string;
     if (entity instanceof CreateAnswerInput)
-      id = "generated-answer-id-" + entity.answer;
-    else id = "custom-question-id";
-    entity.id = id;
+      entity.id = "generated-answer-id-" + entity.answer;
+    else if (entity instanceof CreateQuestionInput)
+      entity.id = "custom-question-id";
     return entity;
   }
   async save(entity: T): Promise<T> {
-    if (this.entities.every((item) => item instanceof Answer)) {
-      const index = answerRepositoryMock.entities.findIndex(
-        (e) => e.id === entity.id
-      );
-      if (index !== -1 && entity instanceof UpdateAnswerInput) {
-        if (entity.answer)
-          answerRepositoryMock.entities[index].answer = entity.answer;
-        if (entity.correct)
-          answerRepositoryMock.entities[index].correct = entity.correct;
-        return entity;
-      }
+    const index = this.entities.findIndex((e) => e.id === entity.id);
+    if (index !== -1 && entity instanceof UpdateAnswerInput) {
+      if (entity.answer)
+        answerRepositoryMock.entities[index].answer = entity.answer;
+      if (entity.correct)
+        answerRepositoryMock.entities[index].correct = entity.correct;
+      return entity;
     } else {
-      const index = questionRepositoryMock.entities.findIndex(
-        (e) => e.id === entity.id
-      );
       if (index !== -1 && entity instanceof UpdateQuestionInput) {
         if (entity.question)
           questionRepositoryMock.entities[index].question = entity.question;
@@ -268,6 +262,16 @@ describe("QuestionService", () => {
       new CreateAnswerInput("Paris", true, null),
       new CreateAnswerInput("London", false, null),
     ];
+    const updateAnswersInput = [
+      new UpdateAnswerInput(
+        "generated-answer-id-Paris",
+        "New Paris",
+        false,
+        null,
+        "custom-question-id"
+      ),
+    ];
+
     const createQuestionInput = new CreateQuestionInput(
       "What is the capital of France?",
       true,
@@ -284,15 +288,19 @@ describe("QuestionService", () => {
       null,
       null,
       null,
-      null,
+      updateAnswersInput,
       null,
       null
     );
 
     await service.create(createQuestionInput);
+    console.log(questionRepositoryMock.entities);
+    console.log(answerRepositoryMock.entities);
     const updatedQuestion = await service.update(updateQuestionInput);
     expect(updatedQuestion.question).toEqual(updateQuestionInput.question);
     expect(updatedQuestion.singleAnswer).toEqual(true);
+    expect(updatedQuestion.answers).toHaveLength(2);
+    expect(updatedQuestion.answers[0].answer).toEqual("New Paris");
   });
 
   it("should throw an ValidationException when updating a question with an answer that does not belong to it", async () => {
@@ -457,6 +465,41 @@ describe("QuestionService", () => {
     expect(answerRepositoryMock.entities).toHaveLength(1);
   });
 
+  it("should throw ValidationException while removing the answer that does not belong to the question", async () => {
+    answerRepositoryMock.entities = [];
+    questionRepositoryMock.entities = [];
+
+    const answersInput = [
+      new CreateAnswerInput("Paris", true, null),
+      new CreateAnswerInput("London", false, null),
+    ];
+    const createQuestionInput = new CreateQuestionInput(
+      "What is the capital of France?",
+      true,
+      null,
+      null,
+      null,
+      answersInput
+    );
+
+    const updateQuestionInput = new UpdateQuestionInput(
+      "custom-question-id",
+      "Choose the capital of France:",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      ["generated-answer-id-Madrid"]
+    );
+
+    await service.create(createQuestionInput);
+    expect(service.update(updateQuestionInput)).rejects.toThrow(
+      ValidationException
+    );
+  });
+
   it("should remove question", async () => {
     answerRepositoryMock.entities = [];
     questionRepositoryMock.entities = [];
@@ -478,5 +521,58 @@ describe("QuestionService", () => {
     const questionRemoved = await service.remove("custom-question-id");
     expect(questionRemoved.question).toEqual(createQuestionInput.question);
     expect(questionRepositoryMock.entities).toHaveLength(0);
+  });
+
+  it("should throw NotFoundException when question with given id not found while updating", async () => {
+    answerRepositoryMock.entities = [];
+    questionRepositoryMock.entities = [];
+
+    const answersInput = [new CreateAnswerInput("Paris", true, null)];
+
+    const createQuestionInput = new CreateQuestionInput(
+      "What is the capital of France?",
+      true,
+      null,
+      null,
+      null,
+      answersInput
+    );
+
+    const updateQuestionInput = new UpdateQuestionInput(
+      "another-question-id",
+      "Choose the capital of France:",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      []
+    );
+
+    await service.create(createQuestionInput);
+    expect(service.update(updateQuestionInput)).rejects.toThrow(
+      NotFoundException
+    );
+  });
+
+  it("should throw NotFoundException when question with given id not found while removing", async () => {
+    answerRepositoryMock.entities = [];
+    questionRepositoryMock.entities = [];
+
+    const answersInput = [new CreateAnswerInput("Paris", true, null)];
+    const createQuestionInput = new CreateQuestionInput(
+      "What is the capital of France?",
+      true,
+      null,
+      null,
+      null,
+      answersInput
+    );
+
+    await service.create(createQuestionInput);
+    expect(service.remove("another-question-id")).rejects.toThrow(
+      NotFoundException
+    );
   });
 });

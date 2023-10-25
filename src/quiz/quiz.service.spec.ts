@@ -171,6 +171,23 @@ describe("QuizService", () => {
     }
   });
 
+  it("should throw ValidationException while updating a quiz", async () => {
+    quizRepositoryMock.entities = [];
+    questionRepositoryMock.entities = [];
+    answerRepositoryMock.entities = [];
+
+    const createQuizInput = new CreateQuizInput("Test Quiz", []);
+
+    const updateQuizInput = new UpdateQuizInput("custom-quiz-id", "");
+
+    await service.create(createQuizInput);
+    try {
+      await service.update(updateQuizInput);
+    } catch (e) {
+      expect(e).toBeInstanceOf(ValidationException);
+    }
+  });
+
   it("should remove a quiz", async () => {
     quizRepositoryMock.entities = [];
     questionRepositoryMock.entities = [];
@@ -182,5 +199,18 @@ describe("QuizService", () => {
     const removedQuiz = await service.remove("custom-quiz-id");
     expect(removedQuiz.id).toEqual("custom-quiz-id");
     expect(quizRepositoryMock.entities.length).toEqual(0);
+  });
+
+  it("should throw NotFoundException while removing a quiz", async () => {
+    quizRepositoryMock.entities = [];
+    questionRepositoryMock.entities = [];
+    answerRepositoryMock.entities = [];
+
+    const createQuizInput = new CreateQuizInput("Test Quiz", []);
+
+    await service.create(createQuizInput);
+    expect(service.remove("another-quiz-id")).rejects.toThrow(
+      NotFoundException
+    );
   });
 });

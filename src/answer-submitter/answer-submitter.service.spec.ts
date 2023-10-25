@@ -9,6 +9,7 @@ import { QuestionService } from "@src/question/question.service";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { GiveAnswerInput } from "@src/question/dto/give-answers.input";
 import { ValidationException } from "@src/exceptions/validation-exception";
+import { NotFoundException } from "@nestjs/common";
 
 interface EntityWithId {
   id: string;
@@ -211,7 +212,7 @@ describe("AnswerSubmitterService", () => {
     );
     expect(incorrectAnswer3.correct).toBe(false);
   });
-  it("answer for a multiple answers question should be correct", async () => {
+  it("answer for a sorting answers question should be correct", async () => {
     const givenAnswerInput = new GiveAnswerInput("question-1", [
       "id-990",
       "id-1290",
@@ -258,7 +259,7 @@ describe("AnswerSubmitterService", () => {
     expect(incorrectAnswer2.correct).toBe(false);
   });
 
-  it("should return correct answers", async () => {
+  it("answer for a plain text answer question should be correct", async () => {
     const correctAnswerInput1 = new GiveAnswerInput("question-1", [
       "San Salvador",
     ]);
@@ -313,12 +314,7 @@ describe("AnswerSubmitterService", () => {
     expect(incorrectAnswer2.correct).toBe(false);
   });
 
-  it("answer for a single answer question should be correct", async () => {
-    const givenAnswerInput = new GiveAnswerInput("question-1", ["id-Paris"]);
-    const incorrectAnswerInput = new GiveAnswerInput("question-1", [
-      "id-London",
-    ]);
-
+  it("should return correct answer for question", async () => {
     const answers1 = [
       new Answer("id-Paris", "Paris", true, null, null, "question-1"),
       new Answer("id-London", "London", true, null, null, "question-1"),
@@ -444,5 +440,60 @@ describe("AnswerSubmitterService", () => {
     expect(
       service.checkAnswer(givenAnswerInput, "another-quiz-id")
     ).rejects.toThrow(ValidationException);
+  });
+
+  it("should throw NotFoundException when quiz with given id not found", async () => {
+    quizRepositoryMock.findOne = jest.fn().mockResolvedValue(undefined);
+
+    expect(
+      service.submitAnswers("quiz-id", [new GiveAnswerInput("question-1", [])])
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it("should throw NotFoundException when question with given id not found", async () => {
+    const quiz = new Quiz("quiz-id", "Test Quiz", []);
+    quizRepositoryMock.findOne = jest.fn().mockResolvedValue(quiz);
+    questionRepositoryMock.findOne = jest.fn().mockResolvedValue(undefined);
+
+    expect(
+      service.submitAnswers("quiz-id", [new GiveAnswerInput("question-1", [])])
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it("should throw ValidationException while submitting answers when given answer is empty", async () => {
+    const givenAnswersInput = [new GiveAnswerInput("question-1", [""])];
+
+    const quiz = new Quiz("quiz-id", "Test Quiz", []);
+
+    quizRepositoryMock.findOne = jest.fn().mockResolvedValue(quiz);
+
+    expect(service.submitAnswers("quiz-id", givenAnswersInput)).rejects.toThrow(
+      ValidationException
+    );
+  });
+  it("should throw ValidationException while submitting answers when given answer does not belong to the question", async () => {
+    const givenAnswersInput = [
+      new GiveAnswerInput("another-question", ["answer"]),
+    ];
+
+    const quiz = new Quiz("quiz-id", "Test Quiz", []);
+    const question = new Question(
+      "question-1",
+      "What is the capital of France?",
+      true,
+      null,
+      null,
+      null,
+      [],
+      null,
+      "quiz-id"
+    );
+
+    quizRepositoryMock.findOne = jest.fn().mockResolvedValue(quiz);
+    questionRepositoryMock.findOne = jest.fn().mockResolvedValue(question);
+
+    expect(service.submitAnswers("quiz-id", givenAnswersInput)).rejects.toThrow(
+      ValidationException
+    );
   });
 });
