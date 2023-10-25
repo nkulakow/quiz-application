@@ -1,16 +1,12 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { CreateQuizInput } from "./dto/create-quiz.input";
-import { UpdateQuizInput } from "./dto/update-quiz.input";
+import { CreateQuizInput, createQuizSchema } from "./dto/create-quiz.input";
+import { UpdateQuizInput, updateQuizSchema } from "./dto/update-quiz.input";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Quiz } from "./entities/quiz.entity";
-import { Question } from "@src/question/entities/question.entity";
 import { Repository } from "typeorm";
 import { QuestionService } from "@src/question/question.service";
-import { GiveAnswerInput } from "@src/question/dto/give-answers.input";
-import { GetResultOutput } from "./dto/get-result.output";
-import { ResultForQuestionOutput } from "@src/question/dto/result-for-question.output";
-import { AnswerForResultOutput } from "@src/answer/dto/answer-for-result.output";
-import { LengthEqualsZeroException } from "@src/exceptions/length-equals-zero-exception";
+import { Transactional } from "typeorm-transactional";
+import { ValidationException } from "@src/exceptions/validation-exception";
 
 @Injectable()
 export class QuizService {
@@ -19,9 +15,14 @@ export class QuizService {
     private questionService: QuestionService
   ) {}
 
+  @Transactional()
   async create(createQuizInput: CreateQuizInput) {
-    if (createQuizInput.name.length < 1) {
-      throw new LengthEqualsZeroException(`Quiz name cannot be empty`);
+    const { error, value } = createQuizSchema.validate(createQuizInput);
+    if (error) {
+      throw new ValidationException(
+        "Validation failed: " +
+          error.details.map((detail) => detail.message).join(", ")
+      );
     }
     let quizToCreate = this.quizRepository.create(createQuizInput);
     let createdQuiz = await this.quizRepository.save(quizToCreate);
@@ -49,7 +50,16 @@ export class QuizService {
     });
   }
 
-  update(updateQuizInput: UpdateQuizInput) {
+  @Transactional()
+  async update(updateQuizInput: UpdateQuizInput) {
+    const { error, value } = updateQuizSchema.validate(updateQuizInput);
+    if (error) {
+      throw new ValidationException(
+        "Validation failed: " +
+          error.details.map((detail) => detail.message).join(", ")
+      );
+    }
+
     if (!this.findOne(updateQuizInput.id)) {
       throw new NotFoundException(
         `Quiz with id ${updateQuizInput.id} not found`
@@ -59,84 +69,14 @@ export class QuizService {
     return this.quizRepository.save(quizToUpdate);
   }
 
+  @Transactional()
   async remove(id: string) {
     let quizToRemove = await this.findOne(id);
     if (!quizToRemove) {
       throw new NotFoundException(`Quiz with id ${id} not found`);
     }
-    const questionsToRemove = quizToRemove.questions;
-    for (let question of questionsToRemove) {
-      await this.questionService.remove(question.id);
-    }
     await this.quizRepository.remove(quizToRemove);
     quizToRemove.id = id;
     return quizToRemove;
-  }
-
-  async submitAnswers(id: string, givenAnswers: GiveAnswerInput[]) {
-    let score = 0;
-    let answeredQuestionsIds = [];
-    let getResultOutput = new GetResultOutput(id, 0, []);
-    let quiz = await this.findOne(id);
-    if (!quiz) {
-      throw new NotFoundException(`Quiz with id ${id} not found`);
-    }
-
-    for (let givenAnswer of givenAnswers)
-      await processAnswer(givenAnswer, this.questionService);
-    getResultOutput.score = parseFloat(
-      ((score * 100) / quiz.questions.length).toFixed(2)
-    );
-
-    processUnansweredQuestions(quiz, this.questionService);
-
-    return getResultOutput;
-
-    async function processAnswer(
-      givenAnswer: GiveAnswerInput,
-      questionService: QuestionService
-    ) {
-      const scoreForQuestion = await questionService.checkAnswer(
-        givenAnswer,
-        quiz.id
-      );
-      if (scoreForQuestion.correct) score++;
-      getResultOutput.questions.push(scoreForQuestion);
-      answeredQuestionsIds.push(givenAnswer.questionId);
-    }
-
-    async function processUnansweredQuestions(
-      quiz: Quiz,
-      questionService: QuestionService
-    ) {
-      for (let question of quiz.questions) {
-        if (!answeredQuestionsIds.includes(question.id)) {
-          const scoreForQuestion = await createScoreForUnansweredQuestion(
-            question,
-            questionService
-          );
-          getResultOutput.questions.push(scoreForQuestion);
-        }
-      }
-    }
-
-    async function createScoreForUnansweredQuestion(
-      question: Question,
-      questionService: QuestionService
-    ) {
-      const correctAnswers = questionService.getCorrectAnswers(question);
-      const correctAnswersMapped = correctAnswers.map(
-        (answer) => new AnswerForResultOutput(answer.id, answer.answer)
-      );
-      const scoreForQuestion = new ResultForQuestionOutput(
-        question.id,
-        question.question,
-        false,
-        false,
-        [],
-        correctAnswersMapped
-      );
-      return scoreForQuestion;
-    }
   }
 }

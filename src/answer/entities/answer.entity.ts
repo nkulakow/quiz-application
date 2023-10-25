@@ -34,7 +34,9 @@ export class Answer {
   @Column({ nullable: true })
   number: number;
 
-  @ManyToOne(() => Question, (question) => question.answers)
+  @ManyToOne(() => Question, (question) => question.answers, {
+    onDelete: "CASCADE",
+  })
   @Field(() => Question)
   question: Question;
 

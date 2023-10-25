@@ -1,4 +1,5 @@
 import { InputType, Field, Int } from "@nestjs/graphql";
+const Joi = require("joi");
 
 @InputType()
 export class UpdateAnswerInput {
@@ -18,13 +19,24 @@ export class UpdateAnswerInput {
 
   @Field()
   id: string;
+
   @Field()
   answer: string;
+
   @Field({ nullable: true })
   correct: boolean;
+
   @Field(() => Int, { nullable: true })
   number: number;
 
   @Field({ nullable: true })
   questionId: string;
 }
+
+export const updateAnswerSchema = Joi.object({
+  id: Joi.string().required(),
+  answer: Joi.string().required(),
+  correct: Joi.boolean().allow(null),
+  number: Joi.number().allow(null),
+  questionId: Joi.string(),
+});
