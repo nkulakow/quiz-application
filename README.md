@@ -298,6 +298,7 @@ To see how all the queries and mutations work go to [GraphQl playground](localho
 - _possibleAnswers_ in question is what should be displayed for students (e.g. to choose one correct). _answers_ in questions are answers given by teacher.
 - _type_ in question returns string informing what is the type of the question - sorting, single answer etc.
 - only one of the fields _singleAnswer_, _multipleAnswer_, _sorting_ and _plainText_ in question can be marked as true, they are the ones that indicate the type of question.
+- _question_ field in Question, _answer_ in field Answer, _name_ in field Quiz cannot be empty. The same goes for ids - they cannot be equal to "" (they can be null in some cases).
 
 ## More about the code
 
