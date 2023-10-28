@@ -3,7 +3,7 @@ import { QuizService } from "./quiz.service";
 import { Quiz } from "./entities/quiz.entity";
 import { CreateQuizInput } from "./dto/create-quiz.input";
 import { UpdateQuizInput } from "./dto/update-quiz.input";
-
+import { NotFoundException } from "@nestjs/common";
 @Resolver(() => Quiz)
 export class QuizResolver {
   constructor(private readonly quizService: QuizService) {}
@@ -19,8 +19,12 @@ export class QuizResolver {
   }
 
   @Query(() => Quiz, { name: "getOneQuiz" })
-  findOne(@Args("id") id: string) {
-    return this.quizService.findOne(id);
+  async findOne(@Args("id") id: string) {
+    const quiz = await this.quizService.findOne(id);
+    if (!quiz) {
+      throw new NotFoundException("Quiz with given id not found");
+    }
+    return quiz;
   }
 
   @Mutation(() => Quiz)

@@ -60,7 +60,7 @@ export class QuizService {
       );
     }
 
-    if (!this.findOne(updateQuizInput.id)) {
+    if (!(await this.findOne(updateQuizInput.id))) {
       throw new NotFoundException(
         `Quiz with id ${updateQuizInput.id} not found`
       );
