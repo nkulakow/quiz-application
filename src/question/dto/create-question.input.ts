@@ -1,5 +1,9 @@
 import { InputType, Field } from "@nestjs/graphql";
-import { CreateAnswerInput } from "@ent/answer/dto/create-answer.input";
+import {
+  CreateAnswerInput,
+  createAnswerSchema,
+} from "@ent/answer/dto/create-answer.input";
+const Joi = require("joi");
 
 @InputType()
 export class CreateQuestionInput {
@@ -23,12 +27,16 @@ export class CreateQuestionInput {
 
   @Field()
   question: string;
+
   @Field({ nullable: true })
   singleAnswer: boolean;
+
   @Field({ nullable: true })
   multipleAnswer: boolean;
+
   @Field({ nullable: true })
   sorting: boolean;
+
   @Field({ nullable: true })
   plainText: boolean;
 
@@ -38,3 +46,13 @@ export class CreateQuestionInput {
   @Field({ nullable: true })
   quizId: string;
 }
+
+export const createQuestionSchema = Joi.object({
+  question: Joi.string().required(),
+  singleAnswer: Joi.boolean().allow(null),
+  multipleAnswer: Joi.boolean().allow(null),
+  sorting: Joi.boolean().allow(null),
+  plainText: Joi.boolean().allow(null),
+  answers: Joi.array().items(createAnswerSchema),
+  quizId: Joi.string(),
+});

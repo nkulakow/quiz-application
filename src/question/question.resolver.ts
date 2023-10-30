@@ -10,9 +10,8 @@ import { QuestionService } from "./question.service";
 import { Question } from "./entities/question.entity";
 import { CreateQuestionInput } from "./dto/create-question.input";
 import { UpdateQuestionInput } from "./dto/update-question.input";
-import { GiveAnswerInput } from "./dto/give-answers.input";
-import { ResultForQuestionOutput } from "./dto/result-for-question.output";
 import { Answer } from "@src/answer/entities/answer.entity";
+import { NotFoundException } from "@nestjs/common";
 
 @Resolver(() => Question)
 export class QuestionResolver {
@@ -27,8 +26,12 @@ export class QuestionResolver {
   }
 
   @Query(() => Question, { name: "getOneQuestion" })
-  findOne(@Args("id") id: string) {
-    return this.questionService.findOne(id);
+  async findOne(@Args("id") id: string) {
+    const question = await this.questionService.findOne(id);
+    if (!question) {
+      throw new NotFoundException("Question with given id not found");
+    }
+    return question;
   }
 
   @Mutation(() => Question)

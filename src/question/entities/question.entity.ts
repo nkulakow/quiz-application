@@ -56,7 +56,7 @@ export class Question {
   @Field(() => [Answer])
   answers: Answer[];
 
-  @ManyToOne(() => Quiz, (quiz) => quiz.questions)
+  @ManyToOne(() => Quiz, (quiz) => quiz.questions, { onDelete: "CASCADE" })
   @Field(() => Quiz)
   quiz: Quiz;
 

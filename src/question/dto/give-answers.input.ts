@@ -1,4 +1,5 @@
 import { InputType, Field } from "@nestjs/graphql";
+const Joi = require("joi");
 
 @InputType()
 export class GiveAnswerInput {
@@ -9,6 +10,12 @@ export class GiveAnswerInput {
 
   @Field()
   questionId: string;
+
   @Field(() => [String])
   answers: string[];
 }
+
+export const giveAnswerSchema = Joi.object({
+  questionId: Joi.string().required(),
+  answers: Joi.array().items(Joi.string()).required(),
+});
